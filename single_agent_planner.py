@@ -59,6 +59,8 @@ def build_constraint_table(constraints, agent):
     #               the given agent for each time step. The table can be used
     #               for a more efficient constraint violation check in the 
     #               is_constrained function.
+    
+    
 
     pass
 
@@ -127,23 +129,25 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
             'time': 0, 
             'parent': None}
     push_node(open_list, root)
-    closed_list[(root['loc'])] = root
+    closed_list[((root['loc']),root['time'])] = root
     while len(open_list) > 0:
-        print("Closed list:", closed_list)
-        print("Open list:", open_list)
+        print("Closed list:", closed_list, "\n")
+        print("Open list:", open_list, "\n")
         # Get the current best path from the open_list.
         curr = pop_node(open_list)
         
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
         if curr['loc'] == goal_loc:
-            print("Final open list:", open_list)
+            print("Final open list:", open_list, "\n")
             return get_path(curr)
         for dir in range(5):
             child_loc = move(curr['loc'], dir)
             # If not a valid location, skip.
             if my_map[child_loc[0]][child_loc[1]]:
                 continue
+            #if is_constrained(child_loc[0]][child_loc[1]):
+            #    continue
             # It's a valid location. Let's define a child with that location.
             child = {'loc': child_loc,
                     'g_val': curr['g_val'] + 1,
@@ -155,12 +159,14 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
                 existing_node = closed_list[(child['loc'])]
                 # Compare previous visit with new child. 
                 # If new child is better, add it.
+                
+                print("I WORKED WOW", child, "\n")
                 if compare_nodes(child, existing_node):
-                    closed_list[(child['loc'])] = child
+                    closed_list[(child['loc']), child['time']] = child
                     push_node(open_list, child)
             # If location was not previously visited, add child to list.
             else:
-                closed_list[(child['loc'])] = child
+                closed_list[(child['loc']), child['time']] = child
                 push_node(open_list, child)
 
     return None  # Failed to find solutions
