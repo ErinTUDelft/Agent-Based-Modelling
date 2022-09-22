@@ -49,6 +49,7 @@ def compute_heuristics(my_map, goal):
     h_values = dict()
     for loc, node in closed_list.items():
         h_values[loc] = node['cost']
+    print("H-values:", h_values)
     return h_values
 
 
@@ -126,31 +127,33 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     push_node(open_list, root)
     closed_list[(root['loc'])] = root
     while len(open_list) > 0:
-        
-        # print(open_list)
-        # print("")
-        # print("")
+        print("Closed list:", closed_list)
+        print("Open list:", open_list)
+        # Get the current best path from the open_list.
         curr = pop_node(open_list)
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
         if curr['loc'] == goal_loc:
+            print("Final open list:", open_list)
             return get_path(curr)
         for dir in range(4):
             child_loc = move(curr['loc'], dir)
-            # print(child_loc)
-            # print("")
-            # print("")
+            # If not a valid location, skip.
             if my_map[child_loc[0]][child_loc[1]]:
                 continue
+            # It's a valid location. Let's define a child with that location.
             child = {'loc': child_loc,
                     'g_val': curr['g_val'] + 1,
                     'h_val': h_values[child_loc],
                     'parent': curr}
+            # Check if location has been previously visited.
             if (child['loc']) in closed_list:
                 existing_node = closed_list[(child['loc'])]
+                # Compare previous visit with new child. If new child is better, add it.
                 if compare_nodes(child, existing_node):
                     closed_list[(child['loc'])] = child
                     push_node(open_list, child)
+            # If location was not previously visited, add child to list.
             else:
                 closed_list[(child['loc'])] = child
                 push_node(open_list, child)
