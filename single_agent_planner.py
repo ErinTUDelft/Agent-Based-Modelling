@@ -22,7 +22,6 @@ def compute_heuristics(my_map, goal):
     #print(root)
     while len(open_list) > 0:
         (cost, loc, curr) = heapq.heappop(open_list)
-        
         for dir in range(4):
             child_loc = move(loc, dir)
             child_cost = cost + 1
@@ -34,7 +33,7 @@ def compute_heuristics(my_map, goal):
             child = {'loc': child_loc, 'cost': child_cost}
             if child_loc in closed_list:
                 existing_node = closed_list[child_loc]
-                #print(existing_node)
+                print(existing_node)
                 if existing_node['cost'] > child_cost:
                     closed_list[child_loc] = child
                     # open_list.delete((existing_node['cost'], existing_node['loc'], existing_node))
@@ -58,9 +57,19 @@ def build_constraint_table(constraints, agent):
     #               for a more efficient constraint violation check in the 
     #               is_constrained function.
     
+    constraint_table = dict()
     
-
-    pass
+    for constraint in constraints:
+        
+        if constraint['agent'] == agent:
+            if not constraint['timestep'] in constraint_table:
+                constraint_table[constraint['timestep']] = []
+                
+            constraint_table[constraint['timestep']].append(constraint['loc'])
+            
+    print("Constraint table:", constraint_table)
+    
+    return constraint_table
 
 
 def get_location(path, time):
@@ -88,7 +97,29 @@ def is_constrained(curr_loc, next_loc, next_time, constraint_table):
     #               any given constraint. For efficiency the constraints are indexed in a constraint_table
     #               by time step, see build_constraint_table.
 
-    pass
+    # If the next time is not in the constraint table, there are no constraints.
+    if not next_time in constraint_table: 
+        return False
+
+    constraints = constraint_table[next_time]
+    
+    for constraint in constraints:      
+        
+        constrained = False
+        
+        # Vertex constraint (1 coordinate)
+        if len(constraint) == 1:
+            if next_loc == constraint[0]:
+                constrained = True
+                print("Constrained!")
+                
+        # Edge constraints (2 coordinates)
+        elif len(constraint) == 2:
+            if curr_loc == constraint[0] and next_loc == constraint[1]:
+                constrained = True
+                print("Constrained!")
+
+    return constrained
 
 
 def push_node(open_list, node):
@@ -124,50 +155,51 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     root = {'loc': start_loc, 
             'g_val': 0, 
             'h_val': h_value, 
-            'time': 0, 
+            'timestep': 0, 
             'parent': None}
     push_node(open_list, root)
-    closed_list[((root['loc']),root['time'])] = root
+    closed_list[((root['loc']),root['timestep'])] = root
+    
+    constraint_table = build_constraint_table(constraints, agent)
+    
     while len(open_list) > 0:
-        print("Closed list:", closed_list, "\n")
-        print("Open list:", open_list, "\n")
+        #print("Closed list:", closed_list, "\n")
+        #print("Open list:", open_list, "\n")
         # Get the current best path from the open_list.
         curr = pop_node(open_list)
         
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
         if curr['loc'] == goal_loc:
-            print("Final open list:", open_list, "\n")
+            #print("Final open list:", open_list, "\n")
             return get_path(curr)
         for dir in range(5):
             child_loc = move(curr['loc'], dir)
             # If not a valid location, skip.
             if my_map[child_loc[0]][child_loc[1]]:
                 continue
-            #if is_constrained(child_loc[0]][child_loc[1]):
-            #    continue
+            # Check for constraints
+            if is_constrained(curr['loc'], child_loc, curr['timestep'] + 1, constraint_table):
+                continue
             # It's a valid location. Let's define a child with that location.
             child = {'loc': child_loc,
                     'g_val': curr['g_val'] + 1,
                     'h_val': h_values[child_loc],
-                    'time': curr['time'] + 1,
+                    'timestep': curr['timestep'] + 1,
                     'parent': curr}
             # Check if location has been previously visited.
-            
-          
-            if (child['loc']) in closed_list:
-                #print("Child loc:", child['loc'], "\n")
+            if (child['loc'], child['timestep']) in closed_list:
                 existing_node = closed_list[(child['loc'])]
                 # Compare previous visit with new child. 
                 # If new child is better, add it.
                 
                 print("I WORKED WOW", child, "\n")
                 if compare_nodes(child, existing_node):
-                    closed_list[(child['loc']), child['time']] = child
+                    closed_list[(child['loc']), child['timestep']] = child
                     push_node(open_list, child)
             # If location was not previously visited, add child to list.
             else:
-                closed_list[(child['loc']), child['time']] = child
+                closed_list[(child['loc']), child['timestep']] = child
                 push_node(open_list, child)
 
     return None  # Failed to find solutions

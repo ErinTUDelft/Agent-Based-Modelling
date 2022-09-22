@@ -28,10 +28,18 @@ class PrioritizedPlanningSolver(object):
 
         start_time = timer.time()
         result = []
-        
-        
-        #Challenge 0: adding appropriate constraints before looping
-        constraints = []
+        constraints = [{'agent': 0,
+                        'loc': [(1,4)],
+                        'timestep': 5},
+                       {'agent': 1,
+                        'loc': [(1,2), (1,3)],
+                        'timestep': 0},
+                       {'agent': 1,
+                        'loc': [(1,2), (1,3)],
+                        'timestep': 2},
+                       {'agent': 1,
+                        'loc': [(1,2), (1,3)],
+                        'timestep': 1}]
 
         for i in range(self.num_of_agents):  # Find path for each agent
             path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
@@ -39,9 +47,6 @@ class PrioritizedPlanningSolver(object):
             if path is None:
                 raise BaseException('No solutions')
             result.append(path)
-            
-            
-            # Challenge 1
 
             ##############################
             # Task 2: Add constraints here
@@ -49,16 +54,7 @@ class PrioritizedPlanningSolver(object):
             #            * path contains the solution path of the current (i'th) agent, e.g., [(1,1),(1,2),(1,3)]
             #            * self.num_of_agents has the number of total agents
             #            * constraints: array of constraints to consider for future A* searches
-            
-            ###############################
-            #Idea is that first agent 0 finds a path (location with attached timesteps)
-            #This path is then added as the constraint for the second agent
-            
-            #Furthermore, vertexes which are not allowed at certain timesteps can be imported before looping
-            
-            # Ch
-            
-            constraints.append[path]
+
 
             ##############################
 
