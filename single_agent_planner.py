@@ -64,17 +64,15 @@ def build_constraint_table(constraints, agent):
     
     for constraint in constraints:
         
-        print(constraint)
-        print(constraint['timestep'])
-        
-        if not constraint['timestep'] in constraint_table:
-            constraint_table[constraint['timestep']] = []
+        if constraint['agent'] == agent:
+            if not constraint['timestep'] in constraint_table:
+                constraint_table[constraint['timestep']] = []
+                
+            constraint_table[constraint['timestep']].append(constraint['loc'])
             
-        constraint_table[constraint['timestep']].append(constraint['loc'])
-        
-        print(constraint_table)
-    pass    
-   #return constraint_table()
+    print("Constraint table:", constraint_table)
+    
+    return constraint_table
 
 
 def get_location(path, time):
@@ -126,18 +124,6 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         agent       - the agent that is being re-planned
         constraints - constraints defining where robot should or cannot go at each timestep
     """
-    
-    constraints = ({'agent': 2,
-                   'loc': [(3,4)],
-                   'timestep': 5},
-                   {'agent': 2,
-                    'loc': [(3,4)],
-                    'timestep': 3},
-                    {'agent': 2,
-                     'loc': [(1,2)],
-                     'timestep': 3})
-    
-    build_constraint_table(constraints, 2)
 
     ##############################
     # Task 1.1: Extend the A* search to search in the space-time domain
@@ -150,10 +136,13 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     root = {'loc': start_loc, 
             'g_val': 0, 
             'h_val': h_value, 
-            'time': 0, 
+            'timestamp': 0, 
             'parent': None}
     push_node(open_list, root)
-    closed_list[((root['loc']),root['time'])] = root
+    closed_list[((root['loc']),root['timestamp'])] = root
+    
+    build_constraint_table(constraints, agent)
+    
     while len(open_list) > 0:
         #print("Closed list:", closed_list, "\n")
         #print("Open list:", open_list, "\n")
@@ -176,7 +165,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
             child = {'loc': child_loc,
                     'g_val': curr['g_val'] + 1,
                     'h_val': h_values[child_loc],
-                    'time': curr['time'] + 1,
+                    'timestamp': curr['timestamp'] + 1,
                     'parent': curr}
             # Check if location has been previously visited.
             if (child['loc']) in closed_list:
@@ -186,11 +175,11 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
                 
                 print("I WORKED WOW", child, "\n")
                 if compare_nodes(child, existing_node):
-                    closed_list[(child['loc']), child['time']] = child
+                    closed_list[(child['loc']), child['timestamp']] = child
                     push_node(open_list, child)
             # If location was not previously visited, add child to list.
             else:
-                closed_list[(child['loc']), child['time']] = child
+                closed_list[(child['loc']), child['timestamp']] = child
                 push_node(open_list, child)
 
     return None  # Failed to find solutions
