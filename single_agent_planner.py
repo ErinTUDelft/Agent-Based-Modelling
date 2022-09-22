@@ -22,9 +22,7 @@ def compute_heuristics(my_map, goal):
     #print(root)
     while len(open_list) > 0:
         (cost, loc, curr) = heapq.heappop(open_list)
-        print(closed_list)
-        print("")
-        print("")
+        
         for dir in range(4):
             child_loc = move(loc, dir)
             child_cost = cost + 1
@@ -36,7 +34,7 @@ def compute_heuristics(my_map, goal):
             child = {'loc': child_loc, 'cost': child_cost}
             if child_loc in closed_list:
                 existing_node = closed_list[child_loc]
-                print(existing_node)
+                #print(existing_node)
                 if existing_node['cost'] > child_cost:
                     closed_list[child_loc] = child
                     # open_list.delete((existing_node['cost'], existing_node['loc'], existing_node))
@@ -155,7 +153,10 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
                     'time': curr['time'] + 1,
                     'parent': curr}
             # Check if location has been previously visited.
+            
+          
             if (child['loc']) in closed_list:
+                #print("Child loc:", child['loc'], "\n")
                 existing_node = closed_list[(child['loc'])]
                 # Compare previous visit with new child. 
                 # If new child is better, add it.

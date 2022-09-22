@@ -161,3 +161,7 @@ if __name__ == '__main__':
             # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
             animation.show()
     result_file.close()
+    
+    
+    # Sum of timesteps
+    # Sum of costs
