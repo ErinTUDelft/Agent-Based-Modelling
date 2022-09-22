@@ -19,8 +19,12 @@ def compute_heuristics(my_map, goal):
     root = {'loc': goal, 'cost': 0}
     heapq.heappush(open_list, (root['cost'], goal, root))
     closed_list[goal] = root
+    #print(root)
     while len(open_list) > 0:
         (cost, loc, curr) = heapq.heappop(open_list)
+        print(closed_list)
+        print("")
+        print("")
         for dir in range(4):
             child_loc = move(loc, dir)
             child_cost = cost + 1
@@ -32,6 +36,7 @@ def compute_heuristics(my_map, goal):
             child = {'loc': child_loc, 'cost': child_cost}
             if child_loc in closed_list:
                 existing_node = closed_list[child_loc]
+                print(existing_node)
                 if existing_node['cost'] > child_cost:
                     closed_list[child_loc] = child
                     # open_list.delete((existing_node['cost'], existing_node['loc'], existing_node))
@@ -112,13 +117,19 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     #           rather than space domain, only.
 
     open_list = []
+    #print("open list: ", open_list)
     closed_list = dict()
     earliest_goal_timestep = 0
     h_value = h_values[start_loc]
     root = {'loc': start_loc, 'g_val': 0, 'h_val': h_value, 'parent': None}
+    #print(root)
     push_node(open_list, root)
     closed_list[(root['loc'])] = root
     while len(open_list) > 0:
+        
+        # print(open_list)
+        # print("")
+        # print("")
         curr = pop_node(open_list)
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
@@ -126,6 +137,9 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
             return get_path(curr)
         for dir in range(4):
             child_loc = move(curr['loc'], dir)
+            # print(child_loc)
+            # print("")
+            # print("")
             if my_map[child_loc[0]][child_loc[1]]:
                 continue
             child = {'loc': child_loc,
