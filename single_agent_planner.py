@@ -164,13 +164,13 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     
     while len(open_list) > 0:
         #print("Closed list:", closed_list, "\n")
-        #print("Open list:", open_list, "\n")
+        print("Open list:", open_list, "\n")
         # Get the current best path from the open_list.
         curr = pop_node(open_list)
         
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
-        if curr['loc'] == goal_loc:
+        if curr['loc'] == goal_loc and curr['timestep'] > max(constraint_table.keys()) + 1:
             #print("Final open list:", open_list, "\n")
             return get_path(curr)
         for dir in range(5):
@@ -187,13 +187,11 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
                     'h_val': h_values[child_loc],
                     'timestep': curr['timestep'] + 1,
                     'parent': curr}
-            # Check if location has been previously visited.
+            # Check if state (location, time) has been previously visited.
             if (child['loc'], child['timestep']) in closed_list:
-                existing_node = closed_list[(child['loc'])]
+                existing_node = closed_list[(child['loc'], child['timestep'])]
                 # Compare previous visit with new child. 
                 # If new child is better, add it.
-                
-                print("I WORKED WOW", child, "\n")
                 if compare_nodes(child, existing_node):
                     closed_list[(child['loc']), child['timestep']] = child
                     push_node(open_list, child)
