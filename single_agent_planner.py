@@ -1,7 +1,7 @@
 import heapq
 
 def move(loc, dir):
-    directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+    directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
     return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
 
 
@@ -118,12 +118,14 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     #           rather than space domain, only.
 
     open_list = []
-    #print("open list: ", open_list)
     closed_list = dict()
     earliest_goal_timestep = 0
     h_value = h_values[start_loc]
-    root = {'loc': start_loc, 'g_val': 0, 'h_val': h_value, 'parent': None}
-    #print(root)
+    root = {'loc': start_loc, 
+            'g_val': 0, 
+            'h_val': h_value, 
+            'time': 0, 
+            'parent': None}
     push_node(open_list, root)
     closed_list[(root['loc'])] = root
     while len(open_list) > 0:
@@ -131,12 +133,13 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         print("Open list:", open_list)
         # Get the current best path from the open_list.
         curr = pop_node(open_list)
+        
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
         if curr['loc'] == goal_loc:
             print("Final open list:", open_list)
             return get_path(curr)
-        for dir in range(4):
+        for dir in range(5):
             child_loc = move(curr['loc'], dir)
             # If not a valid location, skip.
             if my_map[child_loc[0]][child_loc[1]]:
@@ -145,11 +148,13 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
             child = {'loc': child_loc,
                     'g_val': curr['g_val'] + 1,
                     'h_val': h_values[child_loc],
+                    'time': curr['time'] + 1,
                     'parent': curr}
             # Check if location has been previously visited.
             if (child['loc']) in closed_list:
                 existing_node = closed_list[(child['loc'])]
-                # Compare previous visit with new child. If new child is better, add it.
+                # Compare previous visit with new child. 
+                # If new child is better, add it.
                 if compare_nodes(child, existing_node):
                     closed_list[(child['loc'])] = child
                     push_node(open_list, child)
