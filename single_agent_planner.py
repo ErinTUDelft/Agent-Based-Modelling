@@ -60,9 +60,21 @@ def build_constraint_table(constraints, agent):
     #               for a more efficient constraint violation check in the 
     #               is_constrained function.
     
+    constraint_table = dict()
     
-
-    pass
+    for constraint in constraints:
+        
+        print(constraint)
+        print(constraint['timestep'])
+        
+        if not constraint['timestep'] in constraint_table:
+            constraint_table[constraint['timestep']] = []
+            
+        constraint_table[constraint['timestep']].append(constraint['loc'])
+        
+        print(constraint_table)
+    pass    
+   #return constraint_table()
 
 
 def get_location(path, time):
@@ -114,6 +126,18 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         agent       - the agent that is being re-planned
         constraints - constraints defining where robot should or cannot go at each timestep
     """
+    
+    constraints = ({'agent': 2,
+                   'loc': [(3,4)],
+                   'timestep': 5},
+                   {'agent': 2,
+                    'loc': [(3,4)],
+                    'timestep': 3},
+                    {'agent': 2,
+                     'loc': [(1,2)],
+                     'timestep': 3})
+    
+    build_constraint_table(constraints, 2)
 
     ##############################
     # Task 1.1: Extend the A* search to search in the space-time domain
@@ -131,15 +155,15 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     push_node(open_list, root)
     closed_list[((root['loc']),root['time'])] = root
     while len(open_list) > 0:
-        print("Closed list:", closed_list, "\n")
-        print("Open list:", open_list, "\n")
+        #print("Closed list:", closed_list, "\n")
+        #print("Open list:", open_list, "\n")
         # Get the current best path from the open_list.
         curr = pop_node(open_list)
         
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
         if curr['loc'] == goal_loc:
-            print("Final open list:", open_list, "\n")
+            #print("Final open list:", open_list, "\n")
             return get_path(curr)
         for dir in range(5):
             child_loc = move(curr['loc'], dir)
