@@ -19,7 +19,6 @@ def compute_heuristics(my_map, goal):
     root = {'loc': goal, 'cost': 0}
     heapq.heappush(open_list, (root['cost'], goal, root))
     closed_list[goal] = root
-    #print(root)
     while len(open_list) > 0:
         (cost, loc, curr) = heapq.heappop(open_list)
         for dir in range(4):
@@ -27,13 +26,12 @@ def compute_heuristics(my_map, goal):
             child_cost = cost + 1
             if child_loc[0] < 0 or child_loc[0] >= len(my_map) \
                or child_loc[1] < 0 or child_loc[1] >= len(my_map[0]):
-               continue
+                   continue
             if my_map[child_loc[0]][child_loc[1]]:
                 continue
             child = {'loc': child_loc, 'cost': child_cost}
             if child_loc in closed_list:
                 existing_node = closed_list[child_loc]
-                print(existing_node)
                 if existing_node['cost'] > child_cost:
                     closed_list[child_loc] = child
                     # open_list.delete((existing_node['cost'], existing_node['loc'], existing_node))
@@ -46,7 +44,6 @@ def compute_heuristics(my_map, goal):
     h_values = dict()
     for loc, node in closed_list.items():
         h_values[loc] = node['cost']
-    print("H-values:", h_values)
     return h_values
 
 
@@ -66,8 +63,6 @@ def build_constraint_table(constraints, agent):
                 constraint_table[constraint['timestep']] = []
                 
             constraint_table[constraint['timestep']].append(constraint['loc'])
-            
-    print("Constraint table:", constraint_table)
     
     return constraint_table
 
@@ -103,21 +98,21 @@ def is_constrained(curr_loc, next_loc, next_time, constraint_table):
 
     constraints = constraint_table[next_time]
     
-    for constraint in constraints:      
-        
-        constrained = False
+    constrained = False
+    
+    for constraint in constraints:
         
         # Vertex constraint (1 coordinate)
         if len(constraint) == 1:
             if next_loc == constraint[0]:
                 constrained = True
-                print("Constrained!")
+                return True
                 
         # Edge constraints (2 coordinates)
         elif len(constraint) == 2:
             if curr_loc == constraint[0] and next_loc == constraint[1]:
                 constrained = True
-                print("Constrained!")
+                return True
 
     return constrained
 
@@ -163,24 +158,28 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     constraint_table = build_constraint_table(constraints, agent)
     
     while len(open_list) > 0:
-        #print("Closed list:", closed_list, "\n")
-        print("Open list:", open_list, "\n")
         # Get the current best path from the open_list.
         curr = pop_node(open_list)
         
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
-        if curr['loc'] == goal_loc and curr['timestep'] > max(constraint_table.keys()) + 1:
-            #print("Final open list:", open_list, "\n")
+        if curr['loc'] == goal_loc and curr['timestep'] > (max(constraint_table.keys()) + 1 if not constraint_table == dict() else 0):
             return get_path(curr)
         for dir in range(5):
             child_loc = move(curr['loc'], dir)
             # If not a valid location, skip.
+            if not (child_loc[0] >= 0 and child_loc[1] >= 0 and \
+                    child_loc[0] < len(my_map) and child_loc[1] < len(my_map[0])):
+                continue
+            
+            # Check if location is impassable
             if my_map[child_loc[0]][child_loc[1]]:
                 continue
+
             # Check for constraints
             if is_constrained(curr['loc'], child_loc, curr['timestep'] + 1, constraint_table):
                 continue
+            
             # It's a valid location. Let's define a child with that location.
             child = {'loc': child_loc,
                     'g_val': curr['g_val'] + 1,
