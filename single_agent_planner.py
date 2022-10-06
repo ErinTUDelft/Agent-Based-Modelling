@@ -2,6 +2,7 @@ import heapq
 
 def move(loc, dir):
     directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
+
     return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
 
 
@@ -46,7 +47,7 @@ def compute_heuristics(my_map, goal):
     h_values = dict()
     for loc, node in closed_list.items():
         h_values[loc] = node['cost']
-    print("H-values:", h_values)
+    #print("H-values:", h_values)
     return h_values
 
 
@@ -66,8 +67,10 @@ def build_constraint_table(constraints, agent):
                 constraint_table[constraint['timestep']] = []
                 
             constraint_table[constraint['timestep']].append(constraint['loc'])
+
             
     print("Constraint table:", constraint_table)
+
     
     return constraint_table
 
@@ -104,7 +107,7 @@ def is_constrained(curr_loc, next_loc, next_time, constraint_table):
     constraints = constraint_table[next_time]
     
     for constraint in constraints:      
-        
+
         constrained = False
         
         # Vertex constraint (1 coordinate)
@@ -164,12 +167,17 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     
     while len(open_list) > 0:
         #print("Closed list:", closed_list, "\n")
-        print("Open list:", open_list, "\n")
+
+        #print("Open list:", open_list, "\n")
+        #print("Goal: ", goal_loc)
+        #print("Start:", start_loc)
+
         # Get the current best path from the open_list.
         curr = pop_node(open_list)
         
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
+
         if curr['loc'] == goal_loc and curr['timestep'] > max(constraint_table.keys()) + 1:
             #print("Final open list:", open_list, "\n")
             return get_path(curr)
