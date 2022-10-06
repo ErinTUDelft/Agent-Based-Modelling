@@ -29,6 +29,7 @@ class PrioritizedPlanningSolver(object):
 
         start_time = timer.time()
         result = []
+
         constraints = []
         predefined_constraints = [{'agent': 1,
                         'loc': [(7,2),(6,2)],
@@ -54,6 +55,7 @@ class PrioritizedPlanningSolver(object):
         print("constraints before: ", constraints)
         print("num of agents", self.num_of_agents)
       
+
         for i in range(self.num_of_agents):  # Find path for each agent
             print(f"Now cycle {i} begins")
             path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
@@ -68,7 +70,7 @@ class PrioritizedPlanningSolver(object):
             print("starts: " ,self.starts)
             if path is None:
                 raise BaseException('No solutions')
-                
+      
             j = 0
             print("path is: ", path)
             print(len(path))
@@ -97,6 +99,7 @@ class PrioritizedPlanningSolver(object):
             
             result.append(path)
             print("path:", path)
+
 
             ##############################
             # Task 2: Add constraints here

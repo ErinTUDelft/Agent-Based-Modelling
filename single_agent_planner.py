@@ -34,7 +34,7 @@ def compute_heuristics(my_map, goal):
             child = {'loc': child_loc, 'cost': child_cost}
             if child_loc in closed_list:
                 existing_node = closed_list[child_loc]
-                #print(existing_node)
+                print(existing_node)
                 if existing_node['cost'] > child_cost:
                     closed_list[child_loc] = child
                     # open_list.delete((existing_node['cost'], existing_node['loc'], existing_node))
@@ -61,17 +61,16 @@ def build_constraint_table(constraints, agent):
     constraint_table = dict()
     
     for constraint in constraints:
-        #print("constraint_table:", constraint_table)
-        #print("constraint:", constraint)
         
         if constraint['agent'] == agent:
             if not constraint['timestep'] in constraint_table:
                 constraint_table[constraint['timestep']] = []
                 
             constraint_table[constraint['timestep']].append(constraint['loc'])
-            print("constraint_table: ", constraint_table)
+
             
-    #print("Constraint table:", constraint_table)
+    print("Constraint table:", constraint_table)
+
     
     return constraint_table
 
@@ -108,7 +107,7 @@ def is_constrained(curr_loc, next_loc, next_time, constraint_table):
     constraints = constraint_table[next_time]
     
     for constraint in constraints:      
-        print(constraints)
+
         constrained = False
         
         # Vertex constraint (1 coordinate)
@@ -121,17 +120,7 @@ def is_constrained(curr_loc, next_loc, next_time, constraint_table):
         elif len(constraint) == 2:
             if curr_loc == constraint[0] and next_loc == constraint[1]:
                 constrained = True
-                print("Constrained1!")
-            elif curr_loc == constraint[1] and next_loc == constraint[0]:
-                constrained = True
-                print("Constrained2!")
-            elif next_loc == constraint[1]:
-                constrained = True
-                print("Constrained3!")
-            elif curr_loc == constraint[0]:
-                constrained = True
-                print("Constrained4!")
-       
+                print("Constrained!")
 
     return constrained
 
@@ -178,15 +167,18 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     
     while len(open_list) > 0:
         #print("Closed list:", closed_list, "\n")
+
         #print("Open list:", open_list, "\n")
         #print("Goal: ", goal_loc)
         #print("Start:", start_loc)
+
         # Get the current best path from the open_list.
         curr = pop_node(open_list)
         
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
-        if curr['loc'] == goal_loc: #and curr['timestep'] > max(constraint_table.keys()) + 1:
+
+        if curr['loc'] == goal_loc and curr['timestep'] > max(constraint_table.keys()) + 1:
             #print("Final open list:", open_list, "\n")
             return get_path(curr)
         for dir in range(5):
