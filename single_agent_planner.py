@@ -128,9 +128,7 @@ def is_constrained(curr_loc, next_loc, next_time, constraint_table):
             elif next_loc == constraint[1]:
                 constrained = True
                 print("Constrained3!")
-            elif curr_loc == constraint[0]:
-                constrained = True
-                print("Constrained4!")
+
        
 
     return constrained
