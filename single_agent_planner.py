@@ -2,6 +2,7 @@ import heapq
 
 def move(loc, dir):
     directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
+
     return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
 
 
@@ -46,6 +47,7 @@ def compute_heuristics(my_map, goal):
     h_values = dict()
     for loc, node in closed_list.items():
         h_values[loc] = node['cost']
+
     return h_values
 
 
@@ -102,7 +104,7 @@ def is_constrained(curr_loc, next_loc, next_time, constraint_table):
     constrained = False
     
     for constraint in constraints:
-        
+
         # Vertex constraint (1 coordinate)
         if len(constraint) == 1:
             if next_loc == constraint[0]:
@@ -159,15 +161,15 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     constraint_table = build_constraint_table(constraints, agent)
     
     while len(open_list) > 0:
+
         # Get the current best path from the open_list.
         curr = pop_node(open_list)
         
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
+
         if curr['loc'] == goal_loc and curr['timestep'] > \
             (max(constraint_table.keys()) if not constraint_table == dict() else 0):
-            #if agent == 5:
-            #    print("Agent:", agent, constraint_table, constraint_table.keys(), max(constraint_table.keys()) if not constraint_table == dict() else 0)
             return get_path(curr)
         for dir in range(5):
             child_loc = move(curr['loc'], dir)
