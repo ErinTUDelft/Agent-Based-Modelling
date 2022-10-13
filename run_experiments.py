@@ -3,9 +3,8 @@ Main file to run experiments and show animation.
 
 Note: To make the animation work in Spyder you should set graphics backend to 'Automatic' (Preferences > Graphics > Graphics Backend).
 """
-#test made
-#test2
 #!/usr/bin/python
+# Useful A* explanation https://www.redblobgames.com/pathfinding/a-star/introduction.html
 import argparse
 import glob
 from pathlib import Path
