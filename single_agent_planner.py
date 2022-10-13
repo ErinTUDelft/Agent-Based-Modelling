@@ -24,9 +24,11 @@ def compute_heuristics(my_map, goal):
         for dir in range(4):
             child_loc = move(loc, dir)
             child_cost = cost + 1
+            # Ensure location is not off the map.
             if child_loc[0] < 0 or child_loc[0] >= len(my_map) \
                or child_loc[1] < 0 or child_loc[1] >= len(my_map[0]):
                    continue
+            # Ensure location is accessible.
             if my_map[child_loc[0]][child_loc[1]]:
                 continue
             child = {'loc': child_loc, 'cost': child_cost}
@@ -84,7 +86,6 @@ def get_path(goal_node):
         curr = curr['parent']
     path.reverse()
     return path
-
 
 def is_constrained(curr_loc, next_loc, next_time, constraint_table):
     ##############################
@@ -163,7 +164,10 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         
         #############################
         # Task 1.4: Adjust the goal test condition to handle goal constraints
-        if curr['loc'] == goal_loc and curr['timestep'] > (max(constraint_table.keys()) + 1 if not constraint_table == dict() else 0):
+        if curr['loc'] == goal_loc and curr['timestep'] > \
+            (max(constraint_table.keys()) if not constraint_table == dict() else 0):
+            #if agent == 5:
+            #    print("Agent:", agent, constraint_table, constraint_table.keys(), max(constraint_table.keys()) if not constraint_table == dict() else 0)
             return get_path(curr)
         for dir in range(5):
             child_loc = move(curr['loc'], dir)
@@ -172,7 +176,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
                     child_loc[0] < len(my_map) and child_loc[1] < len(my_map[0])):
                 continue
             
-            # Check if location is impassable
+            # Check if location is passable
             if my_map[child_loc[0]][child_loc[1]]:
                 continue
 

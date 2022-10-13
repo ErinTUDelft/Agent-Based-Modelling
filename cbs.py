@@ -2,6 +2,9 @@ import time as timer
 import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
+from visualize import Animation
+from copy import deepcopy
+#from treelib import Node, Tree
 
 
 def detect_collision(path1, path2, debug):
@@ -62,7 +65,7 @@ def detect_collisions(paths, debug=False):
                 
                 collision = {'a1': agent,
                              'a2': other_agent,
-                             'loc': collision_detection['loc'],
+                             'loc': deepcopy(collision_detection['loc']),
                              'timestep': collision_detection['timestep']}                
                 collisions.append(collision)
                 
@@ -87,10 +90,10 @@ def standard_splitting(collision):
     # Vertex constraints
     if len(collision['loc']) == 1:
         constraints.append({'agent': collision['a1'], 
-                            'loc': collision['loc'].copy(), 
+                            'loc': deepcopy(collision['loc']), 
                             'timestep': collision['timestep']})
         constraints.append({'agent': collision['a2'], 
-                            'loc': collision['loc'].copy(), 
+                            'loc': deepcopy(collision['loc']), 
                             'timestep': collision['timestep']})
         
     # Edge constraints
@@ -163,6 +166,8 @@ class CBSSolver(object):
         """
 
         self.start_time = timer.time()
+        
+        debug_file = open("debug.txt", "w", buffering=1)
 
         # Generate the root node
         # constraints   - list of constraints
@@ -172,7 +177,8 @@ class CBSSolver(object):
         root = {'cost': 0,
                 'constraints': [],
                 'paths': [],
-                'collisions': []}
+                'collisions': [],
+                'iteration': 0}
         for i in range(self.num_of_agents):  # Find initial path for each agent
             path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
                           i, root['constraints'])
@@ -182,80 +188,99 @@ class CBSSolver(object):
 
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
-        self.push_node(root)
-
-        # Task 3.1: Testing
+        self.push_node(root) # Add root node to open list.
+        
+        animations = dict()
+        # animation = Animation(self.my_map, self.starts, self.goals, root['paths'])
+        # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
+        # timer.sleep(0.5)
+        # animation.show()
+        # print("Root node")
+        # print("Paths:", root['paths'])
+        # print("Constraints", root['constraints'])
         # print("Collisions:", root['collisions'])
-
-        # Task 3.2: Testing
-        # for collision in root['collisions']:
-        #    print("Constraints:", standard_splitting(collision))
-
+        
         iteration = 0
 
-        while len(self.open_list) > 0 and iteration < 997:
-            node = self.pop_node()
+        while len(self.open_list) > 0:
+            node = self.pop_node() # Obtain the current best node.
             
+            # Check if the node is collision-free, and thus optimal.
             if len(node['collisions']) == 0:
+                #debug_file.close()
+                print(node)
                 return node['paths']
+            
             
             collision = node['collisions'][0]
             #if len(collision['loc']) == 2 and iteration < 997:
-            #    iteration = 997
-            #    print(collision)
+                #iteration = 997
+                # print("Open list iteration:", iteration, self.open_list)
             constraints = standard_splitting(collision)
             
             for constraint in constraints:
                 iteration += 1
-                
-                new_node = dict()
-                new_node['iteration'] = iteration
-                new_node['constraints'] = node['constraints'].copy() + [constraint]
-                new_node['paths'] = node['paths'].copy()
-                
-                agent = constraint['agent']
-                
-                path = a_star(self.my_map, self.starts[agent], self.goals[agent], 
-                              self.heuristics[agent], agent, new_node['constraints'])
-                if path is None:
-                    # raise BaseException('No solutions')
-                    continue
-                
-                new_node['paths'][agent] = path.copy()
-                
-                if iteration >= 997:
+                if False: # iteration >= 997:
                     debug = True
                 else:
                     debug = False
-                    
                 
+                new_node = dict()
+                new_node['iteration'] = iteration
                 
+                if debug:
+                    animate = False
+                    visualised_branch = [759, 552, 549, 515, 484, 282, 270, 260, 215, 111, 83, 51, 15, 7, 4, 1, 0]
+                    if iteration in visualised_branch:
+                        print("VISUALISE")
+                        animate = True
+                        
+                new_node['constraints'] = deepcopy(node['constraints']) + [constraint]
+                new_node['paths'] = deepcopy(node['paths'])
+                
+                # Find the new path for the agent, given the new constraints.
+                agent = constraint['agent']
+                path = a_star(self.my_map, self.starts[agent], self.goals[agent], 
+                              self.heuristics[agent], agent, new_node['constraints'])
+                
+                print(agent, path)
+                
+                # Fill out the new node.
+                new_node['paths'][agent] = deepcopy(path)
                 new_node['collisions'] = detect_collisions(new_node['paths'])
                 new_node['cost'] = get_sum_of_cost(new_node['paths'])
                 
+                # Some code to visualise an entire branch of the algorithm.
                 if debug:
-                    print("Collision:", collision)
-                    print("Node: ", new_node)
-                    break
+                    if animate:
+                        animations[iteration] = Animation(self.my_map, self.starts, self.goals, new_node['paths'])
+                        animations[iteration].show()
+                        timer.sleep(1)
+                    print("Node", iteration)
+                    print("Paths:", new_node['paths'])
+                    print("Constraints", new_node['constraints'])
+                    print("Collisions:", new_node['collisions'])
+                    
+                    debug_file.write("Node {}\n".format(iteration))
+                    debug_file.write("Parent node: {}\n".format(node['iteration']))
+                    debug_file.write("Paths: {}\n".format(new_node['paths']))
+                    debug_file.write("Constraints: {}\n".format(new_node['constraints']))
+                    debug_file.write("Collisions: {}\n".format(new_node['collisions']))
+                    
+                    # tree.create_node(iteration,iteration, parent=node['iteration'])
                 
+                # Add the node to the open list.
                 self.push_node(new_node)
-
-        ##############################
-        # Task 3.3: High-Level Search
-        #           Repeat the following as long as the open list is not empty:
-        #             1. Get the next node from the open list (you can use self.pop_node()
-        #             2. If this node has no collision, return solution
-        #             3. Otherwise, choose the first collision and convert to a list of constraints (using your
-        #                standard_splitting function). Add a new child node to your open list for each constraint
-        #           Ensure to create a copy of any objects that your child nodes might inherit
-
+                
         #self.print_results(root)
         print("No solution found.")
         #print("Final open list:", self.open_list)
         #print("Final node:", node)
-        result = new_node #self.pop_node()
+        result = self.pop_node() # new_node #self.pop_node()
         print("Visualised node:", result)
+        #tree.show()
         self.print_results(result)
+        debug_file.close()
         return result['paths']
 
 
