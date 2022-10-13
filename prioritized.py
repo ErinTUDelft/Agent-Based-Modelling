@@ -1,4 +1,5 @@
 import time as timer
+import random
 from single_agent_planner import compute_heuristics, a_star, get_sum_of_cost
 
 
@@ -28,28 +29,77 @@ class PrioritizedPlanningSolver(object):
 
         start_time = timer.time()
         result = []
-        constraints = [{'agent': 0,
-                        'loc': [(1,4)],
-                        'timestep': 5},
-                       {'agent': 1,
-                        'loc': [(1,2), (1,3)],
-                        'timestep': 0},
-                       {'agent': 1,
-                        'loc': [(1,2), (1,3)],
-                        'timestep': 2},
-                       {'agent': 1,
-                        'loc': [(1,2), (1,3)],
-                        'timestep': 1},
-                       {'agent': 0,
-                        'loc': [(1,5)],
-                        'timestep': 10}]
+
+        constraints = []
+        predefined_constraints = [{'agent': 1,
+                        'loc': [(7,2),(6,2)],
+                        'timestep': 1}, {'agent': 1,
+                                        'loc': [(7,2),(6,2)],
+                                        'timestep': 2}, {'agent': 3,
+                                                        'loc': [(7,2),(6,2)],
+                                                        'timestep': 3},{'agent': 3,
+                                                                        'loc': [(7,2),(6,2)],
+                                                                        'timestep': 4}, {'agent': 3,
+                                                                                        'loc': [(7,2),(6,2)],
+                                                                                        'timestep': 5}]
+                        
+                       
+                       
+                       
+                     
+                                                                                                                                                 
+        constraints = [] #predefined_constraints
+        # constraints.append({'agent': 3,
+        #                 'loc': [(6,2)],
+        #                 'timestep': 3})
+        print("constraints before: ", constraints)
+        print("num of agents", self.num_of_agents)
+      
 
         for i in range(self.num_of_agents):  # Find path for each agent
+            print(f"Now cycle {i} begins")
             path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
                           i, constraints)
+            
+            # print("path:", path)
+            # for time, loc in enumerate(path):
+            # #     print(time)
+            # #     print("Value: ", loc)
+            #       constraint = {'agent': 1, 'loc': [loc], 'timestep': time+1 }
+            #       constraints.append(constraint)
+            print("starts: " ,self.starts)
             if path is None:
                 raise BaseException('No solutions')
+      
+            j = 0
+            print("path is: ", path)
+            print(len(path))
+            # for agentid in range (self.num_of_agents):
+            #     if agentid == i:
+            #         continue
+                
+            #     while j < (len(path)-1):
+            #         constraint = {'agent':  agentid, 'loc': [path[j],path[j+1]], 'timestep' : j}
+            #         j = j+1
+            #         constraints.append(constraint)
+            #         print("constraints after path: ", constraints, "\n")
+            
+            
+            while j < (len(path)-1): # A path for one agent was found using A*, this
+                                     # This now gets appended as constraints for the next agents
+                constraint = {'agent':  i, 'loc': [path[j],path[j+1]], 'timestep' : j}
+                j = j+1
+                constraints.append(constraint)
+            print("constraints after path: ", constraints, "\n")
+            
+            
+                  
+                  
+            print("constraints: ", constraints)
+            
             result.append(path)
+            print("path:", path)
+
 
             ##############################
             # Task 2: Add constraints here
