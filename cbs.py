@@ -243,8 +243,6 @@ class CBSSolver(object):
                 path = a_star(self.my_map, self.starts[agent], self.goals[agent], 
                               self.heuristics[agent], agent, new_node['constraints'])
                 
-                print(agent, path)
-                
                 # Fill out the new node.
                 new_node['paths'][agent] = deepcopy(path)
                 new_node['collisions'] = detect_collisions(new_node['paths'])

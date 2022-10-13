@@ -169,7 +169,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         # Task 1.4: Adjust the goal test condition to handle goal constraints
 
         if curr['loc'] == goal_loc and curr['timestep'] > \
-            (max(constraint_table.keys()) if not constraint_table == dict() else 0):
+            (max(constraint_table.keys()) if not constraint_table == dict() else -1):
             return get_path(curr)
         for dir in range(5):
             child_loc = move(curr['loc'], dir)
