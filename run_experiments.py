@@ -14,6 +14,7 @@ from prioritized import PrioritizedPlanningSolver
 from distributed import DistributedPlanningSolver # Placeholder for Distributed Planning
 from visualize import Animation
 from single_agent_planner import get_sum_of_cost
+from random import randint
 
 SOLVER = "CBS"
 
@@ -53,6 +54,26 @@ def print_locations(my_map, locations):
         to_print += '\n'
     print(to_print)
 
+def random_start(number_of_agents):
+    starts = []
+    goals = []
+    for agents in range(number_of_agents):
+        while True:
+            y_start = randint(0,8)
+            x_start = randint(0,1)
+            valuepair_start = (y_start, x_start)
+      
+            y_goal = randint(0,8)
+            x_goal = randint(20,21)
+            valuepair_goal = (y_goal, x_goal)
+
+            
+            if valuepair_goal not in goals and valuepair_start not in starts:
+                goals.append(valuepair_goal)
+                starts.append(valuepair_start)
+                break 
+            
+    return starts, goals
 
 def import_mapf_instance(filename):
     """
@@ -99,8 +120,18 @@ def import_mapf_instance(filename):
     # #agents lines with the start/goal positions
     starts = []
     goals = []
+    
     for a in range(num_agents):
         line = f.readline()
+        
+        # Any agents which do not have a start and goal location are given
+        # these randomly.
+        if not line:
+            random_starts, random_goals = random_start(num_agents-a)
+            starts = starts + random_starts
+            goals = goals + random_goals
+            break
+        
         sx, sy, gx, gy = [int(x) for x in line.split(' ')]
         starts.append((sx, sy))
         goals.append((gx, gy))
