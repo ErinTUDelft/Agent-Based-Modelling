@@ -24,8 +24,8 @@ from single_agent_planner import get_sum_of_cost
 
 SOLVER = "CBS"
 
-min_num_agents = 2
-max_num_agents = 7
+min_num_agents = 5
+max_num_agents = 6
 iterations = 100
 
 sum_costs = True 
@@ -38,7 +38,7 @@ Distributed = False
 
 Random = True
 Plot = True
-Animations = False 
+Animations = True
 #number_of_collisions
 #percentage of failure cpu_time constrainen naar 5 seconden?
 
@@ -253,6 +253,12 @@ if __name__ == '__main__':
                 cbs_cpu_list.append(cbs_cpu)
                 cbs_cost_list.append(cbs_cost)
                 print("cbs cpu", cbs_cpu)
+                if Animations == True:
+                    print("***Test paths on a simulation***")
+                    animation = Animation(my_map, starts, goals, paths)
+                    # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
+                    animation.show()
+                    timer.sleep(2)
                 
             if Independent == True:
                 print("***Run Independent***")
@@ -269,6 +275,12 @@ if __name__ == '__main__':
                 prioritized_cost_list.append(prioritized_cost)
                 prioritized_cpu_list.append(prioritized_cpu)
                 print("prio cpu:", prioritized_cpu)
+                if Animations == True:
+                    print("***Test paths on a simulation***")
+                    animation = Animation(my_map, starts, goals, paths)
+                    # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
+                    animation.show()
+                    timer.sleep(2)
                 
             if Distributed == True:  # Wrapper of distributed planning solver class
                 print("***Run Distributed Planning***")
@@ -277,13 +289,12 @@ if __name__ == '__main__':
             # else: 
             #     raise RuntimeError("Unknown solver!")
                 
-
-    
-            if Animations == True:
-                print("***Test paths on a simulation***")
-                animation = Animation(my_map, starts, goals, paths)
-                # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
-                animation.show()
+            # if Animations == True:
+            #     print("***Test paths on a simulation***")
+            #     animation = Animation(my_map, starts, goals, paths)
+            #     # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
+            #     animation.show()
+            #     timer.sleep(2)
     plot(agents,cbs_cpu_list, cbs_cost_list, prioritized_cpu_list, prioritized_cost_list,x_axis)    
     result_file.close()
     

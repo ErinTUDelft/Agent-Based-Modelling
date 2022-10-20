@@ -109,12 +109,14 @@ def is_constrained(curr_loc, next_loc, next_time, constraint_table):
         if len(constraint) == 1:
             if next_loc == constraint[0]:
                 constrained = True
+                #print("constrained!")
                 return True
                 
         # Edge constraints (2 coordinates)
         elif len(constraint) == 2:
             if curr_loc == constraint[0] and next_loc == constraint[1]:
                 constrained = True
+                #print("constrained")
                 return True
 
     return constrained
@@ -149,6 +151,8 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     open_list = []
     closed_list = dict()
     earliest_goal_timestep = 0
+    if not start_loc in h_values.keys():
+        raise BaseException("no solutions")
     h_value = h_values[start_loc]
     root = {'loc': start_loc, 
             'g_val': 0, 

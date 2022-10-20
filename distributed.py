@@ -42,6 +42,10 @@ class DistributedPlanningSolver(object):
         for i in range(self.num_of_agents):
             newAgent = AircraftDistributed(self.my_map, self.starts[i], self.goals[i], self.heuristics[i], i)
         
+        #In timestep 1: the position of the agents becomes known
+        #in timestep 2: 
+        
+        
         
         # Print final output
         print("\n Found a solution! \n")

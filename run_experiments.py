@@ -22,6 +22,8 @@ from visualize import Animation
 from single_agent_planner import get_sum_of_cost
 
 SOLVER = "CBS"
+random = True
+agents = 8
 
 def print_mapf_instance(my_map, starts, goals):
     """
@@ -150,7 +152,6 @@ def import_mapf_instance(filename):
         pass
         
     else:
-        num_agents = 5
         for a in range(num_agents):
             line = f.readline()
             sx, sy, gx, gy = [int(x) for x in line.split(' ')]
@@ -201,20 +202,21 @@ if __name__ == '__main__':
             print("***Run Prioritized***")
             x_axis = []
             y_axis = []
-            for hoeveelheid in range(0,8):
-                starts, goals = random_start(hoeveelheid)
-                solver = PrioritizedPlanningSolver(my_map, starts, goals)
+            #agents = 9
+            my_map, starts, goals = import_mapf_instance(file)
+            starts, goals = random_start(agents)
+            solver = PrioritizedPlanningSolver(my_map, starts, goals)
             #solver = PrioritizedPlanningSolver(my_map, )
-                paths = solver.find_solution()
-                cost = get_sum_of_cost(paths)
-                x_axis.append(hoeveelheid)
-                y_axis.append(cost)
+            paths = solver.find_solution()
+            cost = get_sum_of_cost(paths)
+            # x_axis.append(agents)
+            # y_axis.append(cost)
                 
-            plt.plot(x_axis,y_axis)
-            plt.xlabel('Amount of agents')
-            plt.ylabel('sum of costs')
-            plt.title('statistical analysis prioritized solver')
-            plt.show()
+            # plt.plot(x_axis,y_axis)
+            # plt.xlabel('Amount of agents')
+            # plt.ylabel('sum of costs')
+            # plt.title('statistical analysis prioritized solver')
+            # plt.show()
         elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
             print("***Run Distributed Planning***")
             solver = DistributedPlanningSolver(my_map, starts, goals, ...) #!!!TODO: add your own distributed planning implementation here.
