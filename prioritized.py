@@ -52,15 +52,9 @@ class PrioritizedPlanningSolver(object):
                     constraints.append(vertex_constraint)
                     constraints.append(edge_constraint)
                     
-                    # for additional in range(self.M):
-                    #     vertex_constraint = {'agent':  other_agent, 'loc': [path[j+1],], 'timestep' : j+2+additional}
-                    #     constraints.append(vertex_constraint)
-                    
-                                    
-                j = j + 1
-                #print("constraints", constraints)
-                #print('j', j)
-            #print("path", path)
+              
+                j += 1
+
             self.pathfinding_map[path[-1][0]][path[-1][1]] = True
             self.heuristics = []
             for goal in self.goals:
@@ -79,4 +73,4 @@ class PrioritizedPlanningSolver(object):
         print("CPU time (s):    {:.2f}".format(self.CPU_time))
         print("Sum of costs:    {}".format(get_sum_of_cost(result)))
         # print(result)
-        return result
+        return result, self.CPU_time, get_sum_of_cost(result)

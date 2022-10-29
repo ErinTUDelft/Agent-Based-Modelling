@@ -22,7 +22,7 @@ from visualize import Animation
 from single_agent_planner import get_sum_of_cost
 
 SOLVER = "CBS"
-random = True
+random = False
 agents = 8
 
 def print_mapf_instance(my_map, starts, goals):
@@ -93,7 +93,7 @@ def statistical_analysis():
 
 
 def import_mapf_instance(filename):
-    random = True
+    random = False
     """
     Imports mapf instance from instances folder. Expects input as a .txt file in the following format:
         Line1: #rows #columns (number of rows and columns)
@@ -204,19 +204,13 @@ if __name__ == '__main__':
             y_axis = []
             #agents = 9
             my_map, starts, goals = import_mapf_instance(file)
-            starts, goals = random_start(agents)
+            #starts, goals = random_start(agents)
             solver = PrioritizedPlanningSolver(my_map, starts, goals)
             #solver = PrioritizedPlanningSolver(my_map, )
-            paths = solver.find_solution()
-            cost = get_sum_of_cost(paths)
-            # x_axis.append(agents)
-            # y_axis.append(cost)
-                
-            # plt.plot(x_axis,y_axis)
-            # plt.xlabel('Amount of agents')
-            # plt.ylabel('sum of costs')
-            # plt.title('statistical analysis prioritized solver')
-            # plt.show()
+            paths, cpu, cost= solver.find_solution()
+            print(paths)
+            #cost = get_sum_of_cost(paths)
+
         elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
             print("***Run Distributed Planning***")
             solver = DistributedPlanningSolver(my_map, starts, goals, ...) #!!!TODO: add your own distributed planning implementation here.
@@ -226,8 +220,8 @@ if __name__ == '__main__':
             
         #mean, variance
 
-        cost = get_sum_of_cost(paths)
-        result_file.write("{},{}\n".format(file, cost))
+        #cost = get_sum_of_cost(paths)
+        #result_file.write("{},{}\n".format(file, cost))
 
 
         if not args.batch:
