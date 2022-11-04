@@ -67,14 +67,14 @@ class DistributedPlanningSolver(object):
                 for visible_agent in visible_agents:
                     # while path van agent in conflict is met een visible_agent:
                         # Zoek nieuw path
-                    conflict_found = agent.check_conflict(visible_agent) # Return conflict
+                    collisions = agent.check_conflict(visible_agent) # Return conflict
                         # agent.ask_path(visible_agent)
                         
-                    while False:
-                        agent.negotiate_new_path()
+                    while not collisions == []:
+                        agent.negotiate_new_path(visible_agent,collisions)
                             #visible_agent.respond_to_negotiation()
                             #agent.update_path()
-                        conflict_found = agent.check_conflict(visible_agent) # Return conflict
+                        collisions = agent.check_conflict(visible_agent) # Return conflict
                     
                     pass
                 agent.move(timestep)
@@ -85,6 +85,7 @@ class DistributedPlanningSolver(object):
             
         for agent in agents:
             result.append(agent.travelled_path)
+            print(agent.money)
         
         
         # Print final output
@@ -92,5 +93,6 @@ class DistributedPlanningSolver(object):
         print("CPU time (s):    {:.2f}".format(self.CPU_time))
         print("Sum of costs:    {}".format(get_sum_of_cost(result)))  # Hint: think about how cost is defined in your implementation
         print(result)
+     
         
         return result  # Hint: this should be the final result of the distributed planning (visualization is done after planning)

@@ -5,7 +5,7 @@ Code in this file is just provided as guidance, you are free to deviate from it.
 """
 
 from single_agent_planner import a_star, get_location
-from cbs import detect_collisions
+from cbs import detect_collisions, standard_splitting
 import random
 
 class AircraftDistributed(object):
@@ -119,12 +119,12 @@ class AircraftDistributed(object):
     
     # Negotiation (Erin)
     
-    def proposal(self):
-        length_original_path = len(self.path) #finds the length of the original intended path
+    def proposal(self, visible_agent,option):
+        length_original_path = len(self.intended_path) #finds the length of the original intended path
         
-        conflict_location = self.check_conflict(self) #Adds the conflict of interest to the constraint table
-        self.constraints.append(conflict_location)
-        length_new_path = self.calculate_new_path(self)
+        #Adds the conflict of interest to the constraint table
+        self.constraints.append(option)
+        length_new_path = len(self.calculate_new_path())
         
         added_cost = length_new_path - length_original_path
         utility_factor = 0.80 #this can be changed to any arbitrary value, can also be agent dependant
@@ -144,13 +144,16 @@ class AircraftDistributed(object):
         # What the extra cost is of the alternative route
         pass #TODO
     
-    def negotiate_new_path(self,visible_agent):
-        visible_agent.respond_to_negotiation()
+    def negotiate_new_path(self,visible_agent,collisions):
+        #visible_agent.respond_to_negotiation()
+        option = standard_splitting(collisions[0])
         
         #We are doing Vickrey bidding here: a monetary value is given to the other for being allowed to stay on course
-        proposed_bid = self.proposal(self)
-        opponents_bid = self.proposal(visible_agent)
+        proposed_bid = self.proposal(visible_agent,option[0])
+        opponents_bid = visible_agent.proposal(self,option[1])
         
+        print("proposed",proposed_bid)
+        print(opponents_bid)
         #Find whether the bid gets accepted or not
         accept = False
         if proposed_bid > opponents_bid:
@@ -162,19 +165,20 @@ class AircraftDistributed(object):
             else:
                 accept = False
 
-        if accept == True:
+        if accept:
             #Visible agent will use a new path
+            self.constraints.pop(-1)
+            visible_agent.update_path(visible_agent.calculate_new_path())
             self.money -= proposed_bid
             visible_agent.money += proposed_bid
-            print(f"Agent {visible_agent.id} accepts my (agent: {AircraftDistributed.id}) proposal and will change course ")
+            #print(f"Agent {visible_agent.id} accepts my (agent: {AircraftDistributed.id}) proposal and will change course ")
         else:
             #current agent will use a new path
-            self.constraints.append(conflict_location,timestep)
-            self.path = self.calculate_new_path(self)
-            self.money += proposed_bid
+            visible_agent.constraints.pop(-1)
+            self.update_path(self.calculate_new_path())
             visible_agent.money -= proposed_bid
-            
-            print(f"I, agent {AircraftDistributed.id} accepts agent's {visible_agent.id} proposal and will change my course ")
+            self.money += proposed_bid
+            #print(f"Agent {visible_agent.id} accepts my (agent: {AircraftDistributed.id}) proposal and will change course ")
             
         
         pass #TODO
