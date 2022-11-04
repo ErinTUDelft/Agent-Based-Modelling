@@ -37,7 +37,7 @@ def detect_collision(path1, path2, debug):
     return None
 
 
-def detect_collisions(paths, debug=False):
+def detect_collisions(paths, start_time=0, agents=[], debug=False):
     ##############################
     # Task 3.1: Return a list of first collisions between all robot pairs.
     #           A collision can be represented as dictionary that contains the id of the two robots, the vertex or edge
@@ -48,11 +48,21 @@ def detect_collisions(paths, debug=False):
 
     # We evaluate for each agent.
     for agent, path in enumerate(paths):
+      
+        if not agents == []:
+            agent_id = agents[agent]
+        else:
+            agent_id = agent
         
         # We only need to evaluate the relation of an agent with other agents
         # with which it has not previously interacted. Hence, we start the range
         # at agent + 1 (it also should not evaluate interaction with itself.).
         for other_agent in range(agent + 1, len(paths)):
+            
+            if not agents == []:
+                other_agent_id = agents[other_agent]
+            else:
+                other_agent_id = other_agent
             
             if debug:
                 print("Comparing agent", agent, "and", other_agent)
@@ -63,10 +73,10 @@ def detect_collisions(paths, debug=False):
             # If this is the case, we add the collision to the collisions list.
             if not collision_detection == None:
                 
-                collision = {'a1': agent,
-                             'a2': other_agent,
+                collision = {'a1': agent_id,
+                             'a2': other_agent_id,
                              'loc': deepcopy(collision_detection['loc']),
-                             'timestep': collision_detection['timestep']}                
+                             'timestep': collision_detection['timestep'] + start_time}                
                 collisions.append(collision)
                 
     if debug:

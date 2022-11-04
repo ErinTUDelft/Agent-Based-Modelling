@@ -134,7 +134,7 @@ def compare_nodes(n1, n2):
     return n1['g_val'] + n1['h_val'] < n2['g_val'] + n2['h_val']
 
 
-def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
+def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, timestep=0):
     """ my_map      - binary obstacle map
         start_loc   - start position
         goal_loc    - goal position
@@ -149,11 +149,14 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     open_list = []
     closed_list = dict()
     earliest_goal_timestep = 0
+    if not start_loc in h_values.keys():
+        raise BaseException("No Solutions.")
+    
     h_value = h_values[start_loc]
     root = {'loc': start_loc, 
             'g_val': 0, 
             'h_val': h_value, 
-            'timestep': 0, 
+            'timestep': timestep, 
             'parent': None}
     push_node(open_list, root)
     closed_list[((root['loc']),root['timestep'])] = root
