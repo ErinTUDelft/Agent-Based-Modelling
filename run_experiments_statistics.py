@@ -24,9 +24,9 @@ from single_agent_planner import get_sum_of_cost
 
 SOLVER = "CBS"
 
-min_num_agents = 5
-max_num_agents = 6
-iterations = 100
+min_num_agents = 2
+max_num_agents = 7
+iterations = 10
 
 sum_costs = True 
 CPU = True
@@ -232,8 +232,8 @@ if __name__ == '__main__':
         x_axis = []
         
         for agents in range(min_num_agents,max_num_agents):
-            x_axis.append(agents)
-            
+            #for iteration in range(iterations):
+            x_axis.append(agents) 
             if Random == False:
                 my_map, starts, goals = import_mapf_instance(file)
                 
@@ -266,12 +266,9 @@ if __name__ == '__main__':
                 paths = solver.find_solution()
             if Prioritized == True:
                 print("***Run Prioritized***")
-                start_time = timer.time()
                 solver = PrioritizedPlanningSolver(my_map, starts, goals)
-                paths = solver.find_solution()
-                prioritized_cpu = timer.time() - start_time
-                prioritized_cost = get_sum_of_cost(paths)
-                
+                paths, prioritized_cpu, prioritized_cost = solver.find_solution()
+
                 prioritized_cost_list.append(prioritized_cost)
                 prioritized_cpu_list.append(prioritized_cpu)
                 print("prio cpu:", prioritized_cpu)
