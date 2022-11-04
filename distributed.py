@@ -76,11 +76,8 @@ class DistributedPlanningSolver(object):
                             #agent.update_path()
                         conflict_found = agent.check_conflict(visible_agent) # Return conflict
                     
-                    print(conflict_found)
-                    
                     pass
                 agent.move(timestep)
-                print(agent.travelled_path)
             
             timestep += 1
             

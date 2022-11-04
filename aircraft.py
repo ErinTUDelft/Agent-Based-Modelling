@@ -101,13 +101,11 @@ class AircraftDistributed(object):
     
     def check_conflict(self, visible_agent):
         # Obtain the paths of both agents. (Up to max. number of steps to plan)
-        own_path = self.share_intended_path()#[0:self.number_of_steps_to_plan]
-        other_path = visible_agent.share_intended_path()#[0:self.number_of_steps_to_plan]
+        own_path = self.share_intended_path()[0:self.number_of_steps_to_plan]
+        other_path = visible_agent.share_intended_path()[0:self.number_of_steps_to_plan]
         
         # Get the current timestep (necessary for proper constraint definition)
         timestep = self.get_current_time()
-        
-        print("paths", own_path, other_path)
         
         # Detect collisions.
         collisions = detect_collisions([own_path, other_path], timestep, 
