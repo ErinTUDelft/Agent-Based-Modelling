@@ -52,7 +52,7 @@ class DistributedPlanningSolver(object):
         
         timestep = 0
         
-        while timestep < 20:
+        while timestep < 30:
             
             # Step 1: Look for agents in visible range
             # Step 2: If agents found, ask for path intent.
@@ -70,21 +70,24 @@ class DistributedPlanningSolver(object):
                     conflict_found = agent.check_conflict(visible_agent) # Return conflict
                         # agent.ask_path(visible_agent)
                         
-                    while conflict_found:
+                    while False:
                         agent.negotiate_new_path()
                             #visible_agent.respond_to_negotiation()
                             #agent.update_path()
                         conflict_found = agent.check_conflict(visible_agent) # Return conflict
                     
+                    print(conflict_found)
+                    
                     pass
-                agent.update_location(agent.path[timestep])
+                agent.move(timestep)
+                print(agent.travelled_path)
             
             timestep += 1
-        
             
-        
+            
+            
         for agent in agents:
-            result.append(agent.used_paths[-1])
+            result.append(agent.travelled_path)
         
         
         # Print final output
