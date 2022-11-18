@@ -15,6 +15,11 @@ def detect_collision(path1, path2, debug):
     #           An edge collision occurs if the robots swap their location at the same timestep.
     #           You should use "get_location(path, t)" to get the location of a robot at time t.
 
+    try:
+        max([len(i) for i in [path1, path2]])
+    except:
+        print("omstandigheden")
+    
     path = max([len(i) for i in [path1, path2]])
  
     for timestep in range(path):
@@ -148,14 +153,14 @@ class CBSSolver(object):
         for goal in self.goals:
             self.heuristics.append(compute_heuristics(my_map, goal))
 
-    def push_node(self, node):
+    def push_node(self, node): #uncomment print statement
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        print("Generate node {}".format(self.num_of_generated), "Cost:", node['cost'])
+        #print("Generate node {}".format(self.num_of_generated), "Cost:", node['cost'])
         self.num_of_generated += 1
 
-    def pop_node(self):
+    def pop_node(self): #uncomment print statement
         _, _, id, node = heapq.heappop(self.open_list)
-        print("Expand node {}".format(id), "Cost:", node['cost'])
+        #print("Expand node {}".format(id), "Cost:", node['cost'])
         self.num_of_expanded += 1
         return node
 
@@ -201,7 +206,7 @@ class CBSSolver(object):
         # print("Collisions:", root['collisions'])
         
         iteration = 0
-
+        start_time = timer.time()
         while len(self.open_list) > 0:
             node = self.pop_node() # Obtain the current best node.
             
@@ -218,7 +223,14 @@ class CBSSolver(object):
                 # print("Open list iteration:", iteration, self.open_list)
             constraints = standard_splitting(collision)
             
+            print("time", timer.time()-start_time)
+            
             for constraint in constraints:
+                #print(timer.time())
+                
+                if timer.time() - start_time > 5:
+                    return False
+                    #raise BaseException("no solutions within the allocated time")
                 iteration += 1
                 if False: # iteration >= 997:
                     debug = True

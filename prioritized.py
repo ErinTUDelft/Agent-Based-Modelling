@@ -3,6 +3,7 @@ from single_agent_planner import compute_heuristics, a_star, get_sum_of_cost
 from copy import deepcopy
 
 
+
 class PrioritizedPlanningSolver(object):
     """A planner that plans for each robot sequentially."""
 
@@ -35,10 +36,12 @@ class PrioritizedPlanningSolver(object):
 
         for i in range(self.num_of_agents):  # Find path for each agent
             path = a_star(self.pathfinding_map, self.starts[i], self.goals[i], self.heuristics[i],
-                          i, constraints)
+                           i, constraints)
             #print("path", path)
             if path is None:
-                raise BaseException('No solutions')
+                return False
+            
+                #raise BaseException('No solutions')
             
             j = 0
             while j < (len(path)-1): # A path for one agent was found using A*, this
@@ -73,4 +76,4 @@ class PrioritizedPlanningSolver(object):
         print("CPU time (s):    {:.2f}".format(self.CPU_time))
         print("Sum of costs:    {}".format(get_sum_of_cost(result)))
         # print(result)
-        return result, self.CPU_time, get_sum_of_cost(result)
+        return result

@@ -1,4 +1,5 @@
 import heapq
+from visualize import Animation
 
 def move(loc, dir):
     directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
@@ -152,7 +153,15 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     closed_list = dict()
     earliest_goal_timestep = 0
     if not start_loc in h_values.keys():
-        raise BaseException("no solutions")
+        print("start_loc", start_loc)
+        print("goal_loc", goal_loc)
+        print("h_values", h_values)
+        print(my_map)
+        animation = Animation(my_map, (start_loc,(0,1)), (goal_loc,(5,0)), [])
+        #animation.show()
+        return False
+        #raise BaseException("no solutions")
+        
     h_value = h_values[start_loc]
     root = {'loc': start_loc, 
             'g_val': 0, 

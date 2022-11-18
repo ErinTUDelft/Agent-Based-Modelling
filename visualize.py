@@ -116,7 +116,7 @@ class Animation:
 
         return self.patches + self.artists
 
-    @staticmethodhe
+    @staticmethod
     def get_state(t, path):
         if int(t) <= 0:
             return np.array(path[0])
