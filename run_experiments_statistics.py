@@ -21,6 +21,7 @@ from prioritized import PrioritizedPlanningSolver
 from distributed import DistributedPlanningSolver # Placeholder for Distributed Planning
 from visualize import Animation
 from single_agent_planner import get_sum_of_cost
+import pandas as pd
 
 
 SOLVER = "CBS"
@@ -227,8 +228,6 @@ def import_mapf_instance(filename):
     return my_map, starts, goals
 
 
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs various MAPF algorithms')
     parser.add_argument('--instance', type=str, default=None,
@@ -331,10 +330,8 @@ if __name__ == '__main__':
             prioritized_cpu = np.mean(prioritized_cpu)
             cbs_cpu = np.mean(cbs_cpu)
             cbs_cost = np.mean(cbs_cost)
-            
             cbs_cpu_list.append(cbs_cpu)
             cbs_cost_list.append(cbs_cost)             
-                    
             prioritized_cost_list.append(prioritized_cost)
             prioritized_cpu_list.append(prioritized_cpu)                    
                 

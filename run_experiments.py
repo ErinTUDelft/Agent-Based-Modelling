@@ -20,10 +20,11 @@ from prioritized import PrioritizedPlanningSolver
 from distributed import DistributedPlanningSolver # Placeholder for Distributed Planning
 from visualize import Animation
 from single_agent_planner import get_sum_of_cost
+import pandas as pd
 
 SOLVER = "CBS"
-random = False
-agents = 8
+random = True
+agents = 10
 
 def print_mapf_instance(my_map, starts, goals):
     """
@@ -72,8 +73,8 @@ def random_start(number_of_agents):
             x_start = randint(0,1)
             valuepair_start = (y_start, x_start)
       
-            y_goal = randint(0,8)
-            x_goal = randint(20,21)
+            y_goal = 8 - y_start
+            x_goal = 21 - x_start
             valuepair_goal = (y_goal, x_goal)
 
             
@@ -93,7 +94,7 @@ def statistical_analysis():
 
 
 def import_mapf_instance(filename):
-    random = False
+    random = True
     """
     Imports mapf instance from instances folder. Expects input as a .txt file in the following format:
         Line1: #rows #columns (number of rows and columns)
@@ -184,52 +185,79 @@ if __name__ == '__main__':
 
         print("***Import an instance***")
         
-        my_map, starts, goals = import_mapf_instance(file) #dit wil ik aanpassen
+        my_map, starts, goals = import_mapf_instance(file) 
+        starts, goals = random_start(agents)
         print_mapf_instance(my_map, starts, goals)
         
+        costs = []
+        finishtimes = []
+        failures = []
+        cpu_times = []
         
+        for simulations in range(10):
+
             
+        
+            if args.solver == "CBS":
+                print("***Run CBS***")
+                cbs = CBSSolver(my_map, starts, goals)
+                paths = cbs.find_solution(args.disjoint)
+            elif args.solver == "Independent":
+                print("***Run Independent***")
+                solver = IndependentSolver(my_map, starts, goals)
+                paths = solver.find_solution()
+            elif args.solver == "Prioritized":
+                print("***Run Prioritized***")
+                x_axis = []
+                y_axis = []
+                #agents = 9
+                my_map, starts, goals = import_mapf_instance(file)
+                starts, goals = random_start(agents)
+                solver = PrioritizedPlanningSolver(my_map, starts, goals)
+                #solver = PrioritizedPlanningSolver(my_map, )
+                paths = solver.find_solution()
+                print(paths)
+                #cost = get_sum_of_cost(paths)
+                
+                if paths is not False: 
+                    costs.append(get_sum_of_cost(paths))
+                    finishtimes.append(len(max(paths)))
+                    failures.append(True)
+                    cpu_times.append(0)
+                    
+                if paths is False:
+                    costs.append(None)
+                    finishtimes.append(None)
+                    failures.append(False)
+                    cpu_times.append(None)
+                
+                
+           
+    
+            elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
+                print("***Run Distributed Planning***")
+                solver = DistributedPlanningSolver(my_map, starts, goals, ...) #!!!TODO: add your own distributed planning implementation here.
+                paths = solver.find_solution()
+            else: 
+                raise RuntimeError("Unknown solver!")
+                
+        d = {'costs': costs, 
+             'finish times': finishtimes,
+             'failures': failures,
+             'cpu_times': cpu_times
+             }
+        df = pd.DataFrame(data = d)
+        
+        print(costs)
+        print(finishtimes)
+        print(df)
 
-        if args.solver == "CBS":
-            print("***Run CBS***")
-            cbs = CBSSolver(my_map, starts, goals)
-            paths = cbs.find_solution(args.disjoint)
-        elif args.solver == "Independent":
-            print("***Run Independent***")
-            solver = IndependentSolver(my_map, starts, goals)
-            paths = solver.find_solution()
-        elif args.solver == "Prioritized":
-            print("***Run Prioritized***")
-            x_axis = []
-            y_axis = []
-            #agents = 9
-            my_map, starts, goals = import_mapf_instance(file)
-            #starts, goals = random_start(agents)
-            solver = PrioritizedPlanningSolver(my_map, starts, goals)
-            #solver = PrioritizedPlanningSolver(my_map, )
-            paths, cpu, cost= solver.find_solution()
-            print(paths)
-            #cost = get_sum_of_cost(paths)
-
-        elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-            print("***Run Distributed Planning***")
-            solver = DistributedPlanningSolver(my_map, starts, goals, ...) #!!!TODO: add your own distributed planning implementation here.
-            paths = solver.find_solution()
-        else: 
-            raise RuntimeError("Unknown solver!")
-            
-        #mean, variance
-
-        #cost = get_sum_of_cost(paths)
-        #result_file.write("{},{}\n".format(file, cost))
-
-
-        if not args.batch:
-            print("***Test paths on a simulation***")
-            animation = Animation(my_map, starts, goals, paths)
-            # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
-            animation.show()
-    result_file.close()
+    #     if not args.batch:
+    #         print("***Test paths on a simulation***")
+    #         animation = Animation(my_map, starts, goals, paths)
+    #         # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
+    #         animation.show()
+    # result_file.close()
     
     
     # Sum of timesteps

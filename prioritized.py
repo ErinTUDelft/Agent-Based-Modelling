@@ -38,13 +38,16 @@ class PrioritizedPlanningSolver(object):
             path = a_star(self.pathfinding_map, self.starts[i], self.goals[i], self.heuristics[i],
                            i, constraints)
             #print("path", path)
-            if path is None:
-                return False
+            print(path)
+            if path is False:
+                
+                return path 
             
                 #raise BaseException('No solutions')
-            
+            if path == None:
+                break
             j = 0
-            while j < (len(path)-1): # A path for one agent was found using A*, this
+            while j < (len(path)-1): 
                                      # This now gets appended as constraints for the next agents
                 #print("Doing while loop")
                 for other_agent in range(i+1, self.num_of_agents):
@@ -66,14 +69,9 @@ class PrioritizedPlanningSolver(object):
                 pass #raise BaseException('No solutions')
                 
             result.append(path)
-            
-                       
-            
-
-        self.CPU_time = timer.time() - start_time
+        
 
         print("\n Found a solution! \n")
-        print("CPU time (s):    {:.2f}".format(self.CPU_time))
-        print("Sum of costs:    {}".format(get_sum_of_cost(result)))
+        #print("Sum of costs:    {}".format(get_sum_of_cost(result)))
         # print(result)
         return result
