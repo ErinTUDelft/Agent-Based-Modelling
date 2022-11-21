@@ -55,10 +55,11 @@ class PrioritizedPlanningSolver(object):
         print("constraints before: ", constraints)
         print("num of agents", self.num_of_agents)
       
+        self.pathfinding_map = self.my_map.copy()
 
         for i in range(self.num_of_agents):  # Find path for each agent
             print(f"Now cycle {i} begins")
-            path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
+            path = a_star(self.pathfinding_map, self.starts[i], self.goals[i], self.heuristics[i],
                           i, constraints)
             
             # print("path:", path)
@@ -90,6 +91,7 @@ class PrioritizedPlanningSolver(object):
                 constraint = {'agent':  i, 'loc': [path[j],path[j+1]], 'timestep' : j}
                 j = j+1
                 constraints.append(constraint)
+                self.pathfinding_map[path[-1][0]][path[-1][1]] = True
             print("constraints after path: ", constraints, "\n")
             
             
