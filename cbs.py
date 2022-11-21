@@ -15,11 +15,6 @@ def detect_collision(path1, path2, debug):
     #           An edge collision occurs if the robots swap their location at the same timestep.
     #           You should use "get_location(path, t)" to get the location of a robot at time t.
 
-    try:
-        max([len(i) for i in [path1, path2]])
-    except:
-        print("omstandigheden")
-    
     path = max([len(i) for i in [path1, path2]])
  
     for timestep in range(path):
@@ -42,7 +37,7 @@ def detect_collision(path1, path2, debug):
     return None
 
 
-def detect_collisions(paths, debug=False):
+def detect_collisions(paths, start_time=0, agents=[], debug=False):
     ##############################
     # Task 3.1: Return a list of first collisions between all robot pairs.
     #           A collision can be represented as dictionary that contains the id of the two robots, the vertex or edge
@@ -53,11 +48,21 @@ def detect_collisions(paths, debug=False):
 
     # We evaluate for each agent.
     for agent, path in enumerate(paths):
+      
+        if not agents == []:
+            agent_id = agents[agent]
+        else:
+            agent_id = agent
         
         # We only need to evaluate the relation of an agent with other agents
         # with which it has not previously interacted. Hence, we start the range
         # at agent + 1 (it also should not evaluate interaction with itself.).
         for other_agent in range(agent + 1, len(paths)):
+            
+            if not agents == []:
+                other_agent_id = agents[other_agent]
+            else:
+                other_agent_id = other_agent
             
             if debug:
                 print("Comparing agent", agent, "and", other_agent)
@@ -68,10 +73,10 @@ def detect_collisions(paths, debug=False):
             # If this is the case, we add the collision to the collisions list.
             if not collision_detection == None:
                 
-                collision = {'a1': agent,
-                             'a2': other_agent,
+                collision = {'a1': agent_id,
+                             'a2': other_agent_id,
                              'loc': deepcopy(collision_detection['loc']),
-                             'timestep': collision_detection['timestep']}                
+                             'timestep': collision_detection['timestep'] + start_time}                
                 collisions.append(collision)
                 
     if debug:
@@ -153,14 +158,14 @@ class CBSSolver(object):
         for goal in self.goals:
             self.heuristics.append(compute_heuristics(my_map, goal))
 
-    def push_node(self, node): #uncomment print statement
+    def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        #print("Generate node {}".format(self.num_of_generated), "Cost:", node['cost'])
+        #("Generate node {}".format(self.num_of_generated), "Cost:", node['cost'])
         self.num_of_generated += 1
 
-    def pop_node(self): #uncomment print statement
+    def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
-        #print("Expand node {}".format(id), "Cost:", node['cost'])
+        print("Expand node {}".format(id), "Cost:", node['cost'])
         self.num_of_expanded += 1
         return node
 
@@ -170,7 +175,7 @@ class CBSSolver(object):
         disjoint    - use disjoint splitting or not
         """
 
-        self.start_time = timer.time()
+        start_time = timer.time()
         
         debug_file = open("debug.txt", "w", buffering=1)
 
@@ -206,7 +211,7 @@ class CBSSolver(object):
         # print("Collisions:", root['collisions'])
         
         iteration = 0
-        start_time = timer.time()
+
         while len(self.open_list) > 0:
             node = self.pop_node() # Obtain the current best node.
             
@@ -223,14 +228,10 @@ class CBSSolver(object):
                 # print("Open list iteration:", iteration, self.open_list)
             constraints = standard_splitting(collision)
             
-            print("time", timer.time()-start_time)
-            
             for constraint in constraints:
-                #print(timer.time())
-                
-                if timer.time() - start_time > 5:
-                    return False
-                    #raise BaseException("no solutions within the allocated time")
+                if timer.time() - start_time > 3:
+                    paths = False
+                    return paths
                 iteration += 1
                 if False: # iteration >= 997:
                     debug = True
@@ -241,6 +242,7 @@ class CBSSolver(object):
                 new_node['iteration'] = iteration
                 
                 if debug:
+                    pass
                     animate = False
                     visualised_branch = [759, 552, 549, 515, 484, 282, 270, 260, 215, 111, 83, 51, 15, 7, 4, 1, 0]
                     if iteration in visualised_branch:
@@ -262,6 +264,7 @@ class CBSSolver(object):
                 
                 # Some code to visualise an entire branch of the algorithm.
                 if debug:
+                    pass
                     if animate:
                         animations[iteration] = Animation(self.my_map, self.starts, self.goals, new_node['paths'])
                         animations[iteration].show()

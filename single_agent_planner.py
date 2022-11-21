@@ -99,20 +99,16 @@ def is_constrained(curr_loc, next_loc, next_time, constraint_table):
     # If the next time is not in the constraint table, there are no constraints.
     if not next_time in constraint_table: 
         return False
-
     constraints = constraint_table[next_time]
-    
     constrained = False
-    
     for constraint in constraints:
-
         # Vertex constraint (1 coordinate)
         if len(constraint) == 1:
             if next_loc == constraint[0]:
                 constrained = True
                 #print("constrained!")
-                return True
-                
+                return True   
+            
         # Edge constraints (2 coordinates)
         elif len(constraint) == 2:
             if curr_loc == constraint[0] and next_loc == constraint[1]:
@@ -137,7 +133,7 @@ def compare_nodes(n1, n2):
     return n1['g_val'] + n1['h_val'] < n2['g_val'] + n2['h_val']
 
 
-def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
+def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, timestep = 0):
     """ my_map      - binary obstacle map
         start_loc   - start position
         goal_loc    - goal position
@@ -153,11 +149,11 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
     closed_list = dict()
     earliest_goal_timestep = 0
     if not start_loc in h_values.keys():
-        print("start_loc", start_loc)
-        print("goal_loc", goal_loc)
-        print("h_values", h_values)
-        print(my_map)
-        animation = Animation(my_map, (start_loc,(0,1)), (goal_loc,(5,0)), [])
+        #print("start_loc", start_loc)
+        #print("goal_loc", goal_loc)
+        #print("h_values", h_values)
+        #print(my_map)
+        #animation = Animation(my_map, (start_loc,(0,1)), (goal_loc,(5,0)), [])
         #animation.show()
         return False
         #raise BaseException("no solutions")
