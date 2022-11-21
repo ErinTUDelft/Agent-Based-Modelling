@@ -25,8 +25,9 @@ import time as timer
 SOLVER = "Prioritized"
 from random import randint
 
-CBS = not True 
+CBS = False 
 Prioritized = True
+Distributed = False
 random = True
 #agents = 5
 
@@ -67,7 +68,7 @@ def print_locations(my_map, locations):
     print(to_print)
     
 
-def random_start(number_of_agents, starts, goals):
+def random_start(number_of_agents, starts=[], goals=[]):
     for agents in range(number_of_agents):
         while True:
             y_start = randint(0,8)
@@ -187,22 +188,23 @@ if __name__ == '__main__':
         cpu_times = []
         agentsnumber = []
         
+        agent_range = [2,4]
         
-        
-        for agents in range(2,11):
+        for agents in agent_range:
             #print("agents", agents)
             #agents = 5
         
-            for simulations in range(50):
+            for simulations in range(5):
                 agentsnumber.append(agents)
                 
                 my_map, starts, goals = import_mapf_instance(file)
                 starts, goals = random_start(agents)
                 
+                start_time = timer.time()
+                
         
                 if CBS == True:
                     #print("***Run CBS***")
-                    start_time = timer.time()
                     cbs = CBSSolver(my_map, starts, goals)
                     paths = cbs.find_solution(args.disjoint)
                     cpu_time = timer.time() - start_time
@@ -226,8 +228,6 @@ if __name__ == '__main__':
                     #print("***Run Prioritized***")
                     # my_map, starts, goals = import_mapf_instance(file)
                     # starts, goals = random_start(agents)
-
-                    start_time = timer.time()
                     solver = PrioritizedPlanningSolver(my_map, starts, goals)
                     paths = solver.find_solution()
                     cpu_time = timer.time() - start_time
@@ -248,13 +248,28 @@ if __name__ == '__main__':
                         cpu_times.append(None)
                     
 
-                elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-                    print("***Run Distributed Planning***")
+                elif Distributed == True:  # Wrapper of distributed planning solver class
+                    #print("***Run Distributed Planning***")
                     solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
                     paths = solver.find_solution()
+                    cpu_time = timer.time() - start_time
+                    
+                    if paths is not False: 
+                        costs.append(get_sum_of_cost(paths))
+                        finishtimes.append(len(max(paths)))
+                        success.append(True)
+                        cpu_times.append(cpu_time)
+                        
+                    if paths is False:
+                        costs.append(None)
+                        finishtimes.append(None)
+                        success.append(False)
+                        cpu_times.append(None)
                 else: 
                     raise RuntimeError("Unknown solver!")
                     
+                    
+        print("I did finish I just broke")
         d = {'costs': costs, 
                  'finish times': finishtimes,
                  'success': success,
@@ -266,13 +281,16 @@ if __name__ == '__main__':
         # print(costs)
         # print(finishtimes)
         # print(df)
+        
+        
 
-    #     if not args.batch:
-    #         print("***Test paths on a simulation***")
-    #         animation = Animation(my_map, starts, goals, paths)
-    #         # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
-    #         animation.show()
-    # result_file.close()
+        animate = True
+        if animate and not args.batch:
+            print("***Test paths on a simulation***")
+            animation = Animation(my_map, starts, goals, paths)
+            # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
+            animation.show()
+    result_file.close()
     
 def cost_plot(df):
     """"
@@ -286,34 +304,34 @@ def cost_plot(df):
 
     manual = False
     if manual:
-            if args.solver == "CBS":
-                print("***Run CBS***")
-                cbs = CBSSolver(my_map, starts, goals)
-                paths = cbs.find_solution(args.disjoint)
-            elif args.solver == "Independent":
-                print("***Run Independent***")
-                solver = IndependentSolver(my_map, starts, goals)
-                paths = solver.find_solution()
-            elif args.solver == "Prioritized":
-                print("***Run Prioritized***")
-                solver = PrioritizedPlanningSolver(my_map, starts, goals)
-                paths = solver.find_solution()
-            elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-                print("***Run Distributed Planning***")
-                solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
-                paths = solver.find_solution()
-            else: 
-                raise RuntimeError("Unknown solver!")
+        if args.solver == "CBS":
+            print("***Run CBS***")
+            cbs = CBSSolver(my_map, starts, goals)
+            paths = cbs.find_solution(args.disjoint)
+        elif args.solver == "Independent":
+            print("***Run Independent***")
+            solver = IndependentSolver(my_map, starts, goals)
+            paths = solver.find_solution()
+        elif args.solver == "Prioritized":
+            print("***Run Prioritized***")
+            solver = PrioritizedPlanningSolver(my_map, starts, goals)
+            paths = solver.find_solution()
+        elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
+            print("***Run Distributed Planning***")
+            solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
+            paths = solver.find_solution()
+        else: 
+            raise RuntimeError("Unknown solver!")
 
-            cost = get_sum_of_cost(paths)
-            result_file.write("{},{}\n".format(file, cost))
+        cost = get_sum_of_cost(paths)
+        result_file.write("{},{}\n".format(file, cost))
 
 
-            if not args.batch:
-                print("***Test paths on a simulation***")
-                animation = Animation(my_map, starts, goals, paths)
-                # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
-                animation.show()
+        if not args.batch:
+            print("***Test paths on a simulation***")
+            animation = Animation(my_map, starts, goals, paths)
+            # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
+            animation.show()
         result_file.close()
     
     costs_max = df.groupby('agents')['costs'].max()
@@ -322,7 +340,7 @@ def cost_plot(df):
     costs_max = costs_max.rename_axis(index=None)
     costs_min = costs_min.rename_axis(index=None)
     
-    plt.fill_between(range(2,11),costs_max, costs_min, color='grey', alpha=0.5)
+    plt.fill_between(agent_range,costs_max, costs_min, color='grey', alpha=0.5)
     
    
    
@@ -353,7 +371,7 @@ def finishtimes_plot(df):
     finishtime_max = finishtime_max.rename_axis(index=None)
     finishtime_min = finishtime_min.rename_axis(index=None)
     
-    plt.fill_between(range(2,11),finishtime_max, finishtime_min, color='grey', alpha=0.5)
+    plt.fill_between(agent_range,finishtime_max, finishtime_min, color='grey', alpha=0.5)
     
 def cpu_times_plot(df):
     plt.figure() 

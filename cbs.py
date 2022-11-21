@@ -72,8 +72,6 @@ def detect_collisions(paths, start_time=0, agents=[], debug=False):
             
             if debug:
                 print("Comparing agent", agent_id, "and", other_agent_id)
-                
-            print(other_agent_id, paths[other_agent])
             
             # We detect if there is a collision.
             collision_detection = detect_collision(path, paths[other_agent], debug)

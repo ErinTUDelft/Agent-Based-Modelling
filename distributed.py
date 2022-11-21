@@ -17,6 +17,7 @@ class DistributedPlanningSolver(object):
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
         """
         self.CPU_time = 0
+        self.cutoff_time = 5
         self.my_map = my_map
         self.starts = starts
         self.goals = goals
@@ -36,7 +37,6 @@ class DistributedPlanningSolver(object):
         # Initialize constants       
         start_time = timer.time()
         result = []
-        self.CPU_time = timer.time() - start_time
         
         agents = []
         
@@ -52,6 +52,8 @@ class DistributedPlanningSolver(object):
         timestep = 0
         goals_reached = self.num_of_agents*[False]
         
+        stop = False
+        
         while timestep < 190:
             
             # Step 1: Look for agents in visible range
@@ -60,6 +62,12 @@ class DistributedPlanningSolver(object):
             # Step 4: Stick to new path, check conflicts again
                 ### TODO: Find way to solve conflicts / negotiate
             # Step 5: Walk path
+            
+            
+            self.CPU_time = timer.time() - start_time
+            if self.CPU_time > self.cutoff_time:
+                return False
+            
             
             paths_unchanged = self.num_of_agents*[False]
             
@@ -71,15 +79,16 @@ class DistributedPlanningSolver(object):
                     
             if all(goals_reached) == True:
                 break
-            
-            
             while not all(paths_unchanged) == True:
                 for agent in agents:
                     if agent.path_unchanged:
                         continue
                     
-                    #print("Travelled path agent", agent.id, agent.travelled_path)
                     visible_agents = agent.run_agent_radar(agents)
+                    
+                    if visible_agents == []:
+                        agent.path_unchanged = True
+                        continue
                     
                     for visible_agent in visible_agents:
                         # while path van agent in conflict is met een visible_agent:
@@ -88,18 +97,26 @@ class DistributedPlanningSolver(object):
                             # agent.ask_path(visible_agent)
                         
                         agent.path_unchanged = True
+                        self.CPU_time = timer.time() - start_time
+                        if self.CPU_time > self.cutoff_time:
+                            return False
                             
                         while not collisions == []:
-                            agent.negotiate_new_path(visible_agent,collisions)
+                            
+                            stop = agent.negotiate_new_path(visible_agent,collisions, start_time, self.cutoff_time)
+                            
+                            if stop:
+                                return False
                                 #visible_agent.respond_to_negotiation()
                                 #agent.update_path()
                             collisions = agent.check_conflict(visible_agent) # Return conflict
-                            
+                               
                 for agent in agents:
                     if agent.path_unchanged:
                         paths_unchanged[agent.id] = True
                     else:
                         paths_unchanged[agent.id] = False
+                    goals_reached[agent.id] = False
                         
             
             
@@ -108,7 +125,7 @@ class DistributedPlanningSolver(object):
             
         for agent in agents:
             result.append(agent.travelled_path)
-            print("Money for agent", agent.id, agent.money)
+            #print("Money for agent", agent.id, agent.money)
         
         
         # Print final output

@@ -120,7 +120,7 @@ class AircraftDistributed(object):
             intended_path = [self.travelled_path[-1]]
             
         
-        print("Intended path", self.id, intended_path)
+        #print("Intended path", self.id, intended_path)
             
         #if intended_path[-1] == self.goal and \
         #    len(self.path_under_consideration) <= number_of_steps:
@@ -144,7 +144,7 @@ class AircraftDistributed(object):
         if intended_path == []:
             intended_path = [self.travelled_path[-1]]
             
-        print("Intended path", self.id, intended_path)
+        #print("Intended path", self.id, intended_path)
         
         #if intended_path[-1] == self.goal and \
         #    len(self.path_under_consideration) <= number_of_steps:
@@ -226,10 +226,10 @@ class AircraftDistributed(object):
         # What the extra cost is of the alternative route
         pass #TODO
     
-    def negotiate_new_path(self, visible_agent, collisions):
+    def negotiate_new_path(self, visible_agent, collisions, start_time, cutoff_time):
         # visible_agent.respond_to_negotiation()
         
-        print("Negotation started by agent", self.id, "with agent", visible_agent.id)
+        #print("Negotation started by agent", self.id, "with agent", visible_agent.id)
         
         own_collisions = collisions
         opponents_collisions = visible_agent.check_conflict(self)
@@ -238,6 +238,7 @@ class AircraftDistributed(object):
         visible_agent.path_under_consideration = visible_agent.intended_path
         
         iteration = 0
+        
         
         while not own_collisions == []:
             
@@ -251,8 +252,13 @@ class AircraftDistributed(object):
             #print("Full path", self.id, self.travelled_path + self.path_under_consideration)
             #print("Full path", visible_agent.id, visible_agent.travelled_path + visible_agent.path_under_consideration)
             
-            print("Own collisions:", own_collisions)
-        
+            #print("Own collisions:", own_collisions)
+                    
+            CPU_time = timer.time() - start_time
+            
+            if CPU_time > cutoff_time:
+                return True
+            
             own_constraints = []
             
             extra_steps_to_check = len(self.path_under_consideration) - len(self.intended_path)
@@ -295,7 +301,7 @@ class AircraftDistributed(object):
             
             
                 
-            print("Own constraints", own_constraints)
+            #print("Own constraints", own_constraints)
             
             # We are doing Vickrey bidding here: a monetary value is given to the 
             # other for being allowed to stay on course
@@ -304,7 +310,7 @@ class AircraftDistributed(object):
             if cost_of_own_new_path == self.big_M * self.utility_factor:
                 break
             
-            print("New path under consideration", self.id, self.path_under_consideration)
+            #print("New path under consideration", self.id, self.path_under_consideration)
             
             own_collisions = self.check_conflict_under_consideration(visible_agent)
             
@@ -328,7 +334,7 @@ class AircraftDistributed(object):
             
         while not opponents_collisions == []:
             
-            print("Opponents collisions:", opponents_collisions)
+            #print("Opponents collisions:", opponents_collisions)
             
             
             #print("Travelled path", self.travelled_path)
@@ -336,8 +342,15 @@ class AircraftDistributed(object):
             
             #print("Used paths", self.id, self.used_paths)
             #print("Used paths", visible_agent.id, visible_agent.used_paths)
-        
+                    
+            CPU_time = timer.time() - start_time
+            
+            if CPU_time > cutoff_time:
+                return True
+            
+            
             opponents_constraints = []
+
             
             
             extra_steps_to_check = len(visible_agent.path_under_consideration) - len(visible_agent.intended_path)
@@ -376,7 +389,7 @@ class AircraftDistributed(object):
             #            'timestep': visible_agent.get_current_time() + len(self.intended_path) + i})
                     
             
-            print("Opponents constraints", opponents_constraints)
+            #print("Opponents constraints", opponents_constraints)
             # We are doing Vickrey bidding here: a monetary value is given to the 
             # other for being allowed to stay on course
             cost_of_opponents_new_path = visible_agent.consider_new_path(opponents_constraints)
@@ -384,19 +397,19 @@ class AircraftDistributed(object):
             if cost_of_own_new_path == visible_agent.big_M * visible_agent.utility_factor:
                 break
             
-            print("New path under consideration", visible_agent.id, visible_agent.path_under_consideration)
+            #print("New path under consideration", visible_agent.id, visible_agent.path_under_consideration)
             
             opponents_collisions = visible_agent.check_conflict_under_consideration(self)
             
             if len(visible_agent.constraints_under_consideration) > self.constraint_consideration_limit:
                 exit
         
-        print("Timestep", self.get_current_time())
-        print("Own location", self.location)
-        print("Own possible path", self.id, self.location, self.path_under_consideration)
-        print("Opponents intended path", visible_agent.location, visible_agent.id, visible_agent.intended_path)
-        print("Opponents possible path", visible_agent.location, visible_agent.id, visible_agent.path_under_consideration)
-        print("Own intended path", self.location, self.id, self.intended_path)
+        #print("Timestep", self.get_current_time())
+        #print("Own location", self.location)
+        #print("Own possible path", self.id, self.location, self.path_under_consideration)
+        #print("Opponents intended path", visible_agent.location, visible_agent.id, visible_agent.intended_path)
+        #print("Opponents possible path", visible_agent.location, visible_agent.id, visible_agent.path_under_consideration)
+        #print("Own intended path", self.location, self.id, self.intended_path)
         
         own_remaining_money = self.money - cost_of_opponents_new_path
         opponents_remaining_money = visible_agent.money - cost_of_own_new_path
@@ -415,7 +428,7 @@ class AircraftDistributed(object):
             accept = True
         if abs(cost_of_own_new_path - cost_of_opponents_new_path) < 0.001: #within bounds to prevent floating point errors
             flip = random.randint(0,1) #if the bids are the same, a cointoss will decide who wins
-            print("It's a coin flip.")
+            #print("It's a coin flip.")
             if flip == 0:
                 accept = True
             else:
@@ -428,7 +441,7 @@ class AircraftDistributed(object):
             visible_agent.path_unchanged = False
             self.money -= cost_of_opponents_new_path
             visible_agent.money += cost_of_opponents_new_path
-            print(f"Agent {visible_agent.id} accepts my (agent: {self.id}) proposal and will change course ".format())
+            #print(f"Agent {visible_agent.id} accepts my (agent: {self.id}) proposal and will change course ".format())
         else:
             # Current agent will use a new path
             self.constraints += self.constraints_under_consideration
@@ -436,10 +449,10 @@ class AircraftDistributed(object):
             self.path_unchanged = False
             visible_agent.money -= cost_of_own_new_path
             self.money += cost_of_own_new_path
-            print(f"Agent {self.id} accepts my (agent: {visible_agent.id}) proposal and will change course ")
+            #print(f"Agent {self.id} accepts my (agent: {visible_agent.id}) proposal and will change course ")
             
         self.constraints_under_consideration = []
         visible_agent.constraints_under_consideration = []
         
-        print("New intended path agent", self.id, self.location, self.intended_path)
-        print("New intended path agent", visible_agent.id, visible_agent.location, visible_agent.intended_path)
+        #print("New intended path agent", self.id, self.location, self.intended_path)
+        #print("New intended path agent", visible_agent.id, visible_agent.location, visible_agent.intended_path)

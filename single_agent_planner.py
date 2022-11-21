@@ -145,11 +145,6 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, timestep =
     ##############################
     # Task 1.1: Extend the A* search to search in the space-time domain
     #           rather than space domain, only.
-    
-    print(constraints[0:10])
-    print(timestep)
-    print(start_loc)
-    print(agent)
 
     open_list = []
     closed_list = dict()
