@@ -1,6 +1,5 @@
 """
 This file contains the AircraftDistributed class that can be used to implement individual planning.
-
 Code in this file is just provided as guidance, you are free to deviate from it.
 """
 
@@ -444,4 +443,3 @@ class AircraftDistributed(object):
         
         print("New intended path agent", self.id, self.location, self.intended_path)
         print("New intended path agent", visible_agent.id, visible_agent.location, visible_agent.intended_path)
-        

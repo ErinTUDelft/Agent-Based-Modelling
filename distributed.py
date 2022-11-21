@@ -1,6 +1,5 @@
 """
 This file contains a placeholder for the DistributedPlanningSolver class that can be used to implement distributed planning.
-
 Code in this file is just provided as guidance, you are free to deviate from it.
 """
 

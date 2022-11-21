@@ -168,7 +168,7 @@ class CBSSolver(object):
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        print("Generate node {}".format(self.num_of_generated), "Cost:", node['cost'])
+        #("Generate node {}".format(self.num_of_generated), "Cost:", node['cost'])
         self.num_of_generated += 1
 
     def pop_node(self):
@@ -183,7 +183,7 @@ class CBSSolver(object):
         disjoint    - use disjoint splitting or not
         """
 
-        self.start_time = timer.time()
+        start_time = timer.time()
         
         debug_file = open("debug.txt", "w", buffering=1)
 
@@ -237,6 +237,9 @@ class CBSSolver(object):
             constraints = standard_splitting(collision)
             
             for constraint in constraints:
+                if timer.time() - start_time > 3:
+                    paths = False
+                    return paths
                 iteration += 1
                 if False: # iteration >= 997:
                     debug = True
@@ -247,6 +250,7 @@ class CBSSolver(object):
                 new_node['iteration'] = iteration
                 
                 if debug:
+                    pass
                     animate = False
                     visualised_branch = [759, 552, 549, 515, 484, 282, 270, 260, 215, 111, 83, 51, 15, 7, 4, 1, 0]
                     if iteration in visualised_branch:
@@ -271,6 +275,7 @@ class CBSSolver(object):
                 
                 # Some code to visualise an entire branch of the algorithm.
                 if debug:
+                    pass
                     if animate:
                         animations[iteration] = Animation(self.my_map, self.starts, self.goals, new_node['paths'])
                         animations[iteration].show()
