@@ -23,6 +23,7 @@ from single_agent_planner import get_sum_of_cost
 import pandas as pd
 import time as timer
 SOLVER = "Prioritized"
+from random import randint
 
 CBS = not True 
 Prioritized = True
@@ -66,12 +67,9 @@ def print_locations(my_map, locations):
     print(to_print)
     
 
-def random_start(number_of_agents):
-    starts = []
-    goals = []
+def random_start(number_of_agents, starts, goals):
     for agents in range(number_of_agents):
-        Condition = False 
-        while Condition == False:
+        while True:
             y_start = randint(0,8)
             x_start = randint(0,1)
             valuepair_start = (y_start, x_start)
@@ -84,11 +82,8 @@ def random_start(number_of_agents):
             if valuepair_goal not in goals and valuepair_start not in starts:
                 goals.append(valuepair_goal)
                 starts.append(valuepair_start)
-                Condition = True 
+                break 
                 
-            else:
-                continue
-            
     return starts, goals
 
 def import_mapf_instance(filename):
@@ -141,22 +136,21 @@ def import_mapf_instance(filename):
     starts = []
     goals = []
     
-    #if random == True:
-        #starts, goals = random_start(number_of_agents)
+
+    for a in range(num_agents):
+        line = f.readline()
         
-    #else: 
-        #doe de code hier beneden
-    if random == True:
-        #starts, goals = random_start(number_of_agents)
-        pass
+        # Any agents which do not have a start and goal location are given
+        # these randomly.
+        if not line:
+            starts, goals = random_start(num_agents-a, starts, goals)
+            break
         
-    else:
-        for a in range(num_agents):
-            line = f.readline()
-            sx, sy, gx, gy = [int(x) for x in line.split(' ')]
-            starts.append((sx, sy))
-            goals.append((gx, gy))
-        f.close()
+        sx, sy, gx, gy = [int(x) for x in line.split(' ')]
+        starts.append((sx, sy))
+        goals.append((gx, gy))
+    f.close()
+    
     return my_map, starts, goals
 
 
@@ -290,6 +284,37 @@ def cost_plot(df):
     costs_average = df.groupby('agents')['costs'].mean().plot(kind = 'line', xlabel = 'agents [-]', ylabel = 'Total cost [-]', ylim = 0, title = 'Total costs for prioritized planning per number of agents ')
     plt.legend(['maximum', 'minimum' , 'mean'])
 
+    manual = False
+    if manual:
+            if args.solver == "CBS":
+                print("***Run CBS***")
+                cbs = CBSSolver(my_map, starts, goals)
+                paths = cbs.find_solution(args.disjoint)
+            elif args.solver == "Independent":
+                print("***Run Independent***")
+                solver = IndependentSolver(my_map, starts, goals)
+                paths = solver.find_solution()
+            elif args.solver == "Prioritized":
+                print("***Run Prioritized***")
+                solver = PrioritizedPlanningSolver(my_map, starts, goals)
+                paths = solver.find_solution()
+            elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
+                print("***Run Distributed Planning***")
+                solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
+                paths = solver.find_solution()
+            else: 
+                raise RuntimeError("Unknown solver!")
+
+            cost = get_sum_of_cost(paths)
+            result_file.write("{},{}\n".format(file, cost))
+
+
+            if not args.batch:
+                print("***Test paths on a simulation***")
+                animation = Animation(my_map, starts, goals, paths)
+                # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
+                animation.show()
+        result_file.close()
     
     costs_max = df.groupby('agents')['costs'].max()
     costs_min = df.groupby('agents')['costs'].min()

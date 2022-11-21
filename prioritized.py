@@ -37,12 +37,14 @@ class PrioritizedPlanningSolver(object):
         for i in range(self.num_of_agents):  # Find path for each agent
             path = a_star(self.pathfinding_map, self.starts[i], self.goals[i], self.heuristics[i],
                            i, constraints)
+
             if path is None:
                 path = False
                 return path
                 
             if path is False:
                 return path 
+
 
             j = 0
             while j < (len(path)-1): 
