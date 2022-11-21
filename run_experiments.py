@@ -9,6 +9,7 @@ Note: To make the animation work in Spyder you should set graphics backend to 'A
 #test2
 #!/usr/bin/python
 from random import randint
+from random import shuffle
 import matplotlib.pyplot as plt
 import statistics
 import argparse
@@ -26,8 +27,9 @@ SOLVER = "Prioritized"
 from random import randint
 
 CBS = False 
-Prioritized = True
-Distributed = False
+Prioritized = False
+Prioritizedplus = False
+Distributed = True
 random = True
 #agents = 5
 
@@ -69,6 +71,8 @@ def print_locations(my_map, locations):
     
 
 def random_start(number_of_agents, starts=[], goals=[]):
+    starts = []
+    goals = [] 
     for agents in range(number_of_agents):
         while True:
             y_start = randint(0,8)
@@ -188,7 +192,7 @@ if __name__ == '__main__':
         cpu_times = []
         agentsnumber = []
         
-        agent_range = [2,4]
+        agent_range = range(2,11)
         
         for agents in agent_range:
             #print("agents", agents)
@@ -246,7 +250,72 @@ if __name__ == '__main__':
                         finishtimes.append(None)
                         success.append(False)
                         cpu_times.append(None)
+                
+                elif Prioritizedplus == True:
+                    #print("***Run Prioritized***")
+                    # my_map, starts, goals = import_mapf_instance(file)
+                    # starts, goals = random_start(agents)
+                
+                    solver = DistributedPlanningSolver(my_map, starts, goals) 
+                    paths1 = solver.find_solution()
                     
+                    paths1 = False
+                    
+                    
+                    paths2 = False
+                    
+                    if paths2 == False:
+                        while paths2 == False:
+                            start_time = timer.time()
+                            solver = PrioritizedPlanningSolver(my_map, starts, goals)
+                            paths2 = solver.find_solution()
+                            
+                            # Shuffle two lists with same order
+                            # Using zip() + * operator + shuffle()
+                            
+                            temp = list(zip(starts, goals))
+                            shuffle(temp)
+                            #("temp", temp)
+                            # except:
+                            #     print("starts:", starts)
+                            #     print("goals:", goals)
+                            #     print("temp:", temp)
+                            #     raise BaseException()
+                            res1, res2 = zip(*temp)
+                            starts, goals = list(res1), list(res2)
+                            
+                            if timer.time() - start_time > 3:
+                                paths2 = False
+                            
+                    if paths1 is False and paths2 is not False:
+                        paths = paths2
+                    if paths1 is not False and paths2 is not False:       
+                        paths = min(paths1, paths2)
+                    if paths1 is not False and paths2 is False:
+                        paths = paths1
+                    else: 
+                        paths = False
+                    cpu_time = timer.time() - start_time
+                    
+                    # if get_sum_of_cost(paths) > 400:
+                    #     print("paths1", paths1)
+                    #     print("paths2", paths2)
+   
+                    if paths is not False: 
+                        if get_sum_of_cost(paths) > 400:
+                            animation = Animation(my_map, starts, goals, paths)
+                            animation.show()
+                            
+                        costs.append(get_sum_of_cost(paths))
+                        finishtimes.append(len(max(paths)))
+                        success.append(True)
+                        cpu_times.append(cpu_time)
+                        
+                    if paths is False:
+                        costs.append(None)
+                        finishtimes.append(None)
+                        success.append(False)
+                        cpu_times.append(None)    
 
                 elif Distributed == True:  # Wrapper of distributed planning solver class
                     #print("***Run Distributed Planning***")
@@ -269,7 +338,6 @@ if __name__ == '__main__':
                     raise RuntimeError("Unknown solver!")
                     
                     
-        print("I did finish I just broke")
         d = {'costs': costs, 
                  'finish times': finishtimes,
                  'success': success,
@@ -284,7 +352,7 @@ if __name__ == '__main__':
         
         
 
-        animate = True
+        animate = False
         if animate and not args.batch:
             print("***Test paths on a simulation***")
             animation = Animation(my_map, starts, goals, paths)
@@ -297,42 +365,11 @@ def cost_plot(df):
     This function takes the large created dataframe, and categorizes it by grouping the 
     minimum, maximum and mean value for each number of agents. These values are then plotted. 
     """
+    plt.figure()
     costs_max = df.groupby('agents')['costs'].max().plot(kind = 'line')
     costs_min = df.groupby('agents')['costs'].min().plot(kind = 'line')
     costs_average = df.groupby('agents')['costs'].mean().plot(kind = 'line', xlabel = 'agents [-]', ylabel = 'Total cost [-]', ylim = 0, title = 'Total costs for prioritized planning per number of agents ')
     plt.legend(['maximum', 'minimum' , 'mean'])
-
-    manual = False
-    if manual:
-        if args.solver == "CBS":
-            print("***Run CBS***")
-            cbs = CBSSolver(my_map, starts, goals)
-            paths = cbs.find_solution(args.disjoint)
-        elif args.solver == "Independent":
-            print("***Run Independent***")
-            solver = IndependentSolver(my_map, starts, goals)
-            paths = solver.find_solution()
-        elif args.solver == "Prioritized":
-            print("***Run Prioritized***")
-            solver = PrioritizedPlanningSolver(my_map, starts, goals)
-            paths = solver.find_solution()
-        elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-            print("***Run Distributed Planning***")
-            solver = DistributedPlanningSolver(my_map, starts, goals) #!!!TODO: add your own distributed planning implementation here.
-            paths = solver.find_solution()
-        else: 
-            raise RuntimeError("Unknown solver!")
-
-        cost = get_sum_of_cost(paths)
-        result_file.write("{},{}\n".format(file, cost))
-
-
-        if not args.batch:
-            print("***Test paths on a simulation***")
-            animation = Animation(my_map, starts, goals, paths)
-            # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
-            animation.show()
-        result_file.close()
     
     costs_max = df.groupby('agents')['costs'].max()
     costs_min = df.groupby('agents')['costs'].min()
@@ -342,7 +379,7 @@ def cost_plot(df):
     
     plt.fill_between(agent_range,costs_max, costs_min, color='grey', alpha=0.5)
     
-   
+    print("woopdoop")
    
     #plt.fill_between(costs_max,costs_min)
     successrate = df.groupby('agents')['success'].mean()
@@ -382,7 +419,3 @@ cost_plot(df)
 succes_plot(df)
 finishtimes_plot(df)
 cpu_times_plot(df)
-
-
-
-    
