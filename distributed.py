@@ -51,8 +51,9 @@ class DistributedPlanningSolver(object):
         #print(agents)
         
         timestep = 0
+        goals_reached = self.num_of_agents*[False]
         
-        while timestep < 30:
+        while timestep < 190:
             
             # Step 1: Look for agents in visible range
             # Step 2: If agents found, ask for path intent.
@@ -61,31 +62,54 @@ class DistributedPlanningSolver(object):
                 ### TODO: Find way to solve conflicts / negotiate
             # Step 5: Walk path
             
+            paths_unchanged = self.num_of_agents*[False]
+            
             for agent in agents:
-                visible_agents = agent.run_agent_radar(agents)
-                
-                for visible_agent in visible_agents:
-                    # while path van agent in conflict is met een visible_agent:
-                        # Zoek nieuw path
-                    collisions = agent.check_conflict(visible_agent) # Return conflict
-                        # agent.ask_path(visible_agent)
-                        
-                    while not collisions == []:
-                        agent.negotiate_new_path(visible_agent,collisions)
-                            #visible_agent.respond_to_negotiation()
-                            #agent.update_path()
-                        collisions = agent.check_conflict(visible_agent) # Return conflict
-                    
-                    pass
                 agent.move(timestep)
+                agent.path_unchanged = False
+                if agent.location == agent.goal:
+                    goals_reached[agent.id] = True
+                    
+            if all(goals_reached) == True:
+                break
+            
+            
+            while not all(paths_unchanged) == True:
+                for agent in agents:
+                    if agent.path_unchanged:
+                        continue
+                    
+                    #print("Travelled path agent", agent.id, agent.travelled_path)
+                    visible_agents = agent.run_agent_radar(agents)
+                    
+                    for visible_agent in visible_agents:
+                        # while path van agent in conflict is met een visible_agent:
+                            # Zoek nieuw path
+                        collisions = agent.check_conflict(visible_agent) # Return conflict
+                            # agent.ask_path(visible_agent)
+                        
+                        agent.path_unchanged = True
+                            
+                        while not collisions == []:
+                            agent.negotiate_new_path(visible_agent,collisions)
+                                #visible_agent.respond_to_negotiation()
+                                #agent.update_path()
+                            collisions = agent.check_conflict(visible_agent) # Return conflict
+                            
+                for agent in agents:
+                    if agent.path_unchanged:
+                        paths_unchanged[agent.id] = True
+                    else:
+                        paths_unchanged[agent.id] = False
+                        
+            
+            
             
             timestep += 1
             
-            
-            
         for agent in agents:
             result.append(agent.travelled_path)
-            print(agent.money)
+            print("Money for agent", agent.id, agent.money)
         
         
         # Print final output

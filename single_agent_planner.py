@@ -61,6 +61,7 @@ def build_constraint_table(constraints, agent):
     constraint_table = dict()
     
     for constraint in constraints:
+        # print(constraint)
         
         if constraint['agent'] == agent:
             if not constraint['timestep'] in constraint_table:
@@ -145,6 +146,11 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, timestep=0
     ##############################
     # Task 1.1: Extend the A* search to search in the space-time domain
     #           rather than space domain, only.
+    
+    print(constraints[0:10])
+    print(timestep)
+    print(start_loc)
+    print(agent)
 
     open_list = []
     closed_list = dict()

@@ -54,9 +54,7 @@ def print_locations(my_map, locations):
         to_print += '\n'
     print(to_print)
 
-def random_start(number_of_agents):
-    starts = []
-    goals = []
+def random_start(number_of_agents, starts, goals):
     for agents in range(number_of_agents):
         while True:
             y_start = randint(0,8)
@@ -127,9 +125,7 @@ def import_mapf_instance(filename):
         # Any agents which do not have a start and goal location are given
         # these randomly.
         if not line:
-            random_starts, random_goals = random_start(num_agents-a)
-            starts = starts + random_starts
-            goals = goals + random_goals
+            starts, goals = random_start(num_agents-a, starts, goals)
             break
         
         sx, sy, gx, gy = [int(x) for x in line.split(' ')]

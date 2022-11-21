@@ -45,6 +45,9 @@ def detect_collisions(paths, start_time=0, agents=[], debug=False):
     #           You should use your detect_collision function to find a collision between two robots.
     
     collisions = []
+    
+    if debug:
+        print(paths)
 
     # We evaluate for each agent.
     for agent, path in enumerate(paths):
@@ -53,6 +56,9 @@ def detect_collisions(paths, start_time=0, agents=[], debug=False):
             agent_id = agents[agent]
         else:
             agent_id = agent
+            
+        if debug:
+            print(agent_id, path)
         
         # We only need to evaluate the relation of an agent with other agents
         # with which it has not previously interacted. Hence, we start the range
@@ -65,7 +71,9 @@ def detect_collisions(paths, start_time=0, agents=[], debug=False):
                 other_agent_id = other_agent
             
             if debug:
-                print("Comparing agent", agent, "and", other_agent)
+                print("Comparing agent", agent_id, "and", other_agent_id)
+                
+            print(other_agent_id, paths[other_agent])
             
             # We detect if there is a collision.
             collision_detection = detect_collision(path, paths[other_agent], debug)
