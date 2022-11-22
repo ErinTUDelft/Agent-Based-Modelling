@@ -7,18 +7,19 @@ from copy import deepcopy
 #from treelib import Node, Tree
 
 
-def detect_collision(path1, path2, debug):
-    ##############################
-    # Task 3.1: Return the first collision that occurs between two robot paths (or None if there is no collision)
-    #           There are two types of collisions: vertex collision and edge collision.
-    #           A vertex collision occurs if both robots occupy the same location at the same timestep
-    #           An edge collision occurs if the robots swap their location at the same timestep.
-    #           You should use "get_location(path, t)" to get the location of a robot at time t.
+def detect_collision(path1, path2, debug=False):
+    """ Returns the first collision that occurs between two robot paths (or None if there is no collision)
+
+    path1    - First path to evaluate
+    path2    - Second path to evaluate
+    debug    - Debug parameter (Boolean) to generate additional print statements.
+    """
 
     path = max([len(i) for i in [path1, path2]])
  
     for timestep in range(path):
         
+        # Print statement for debug purposes
         if debug:
             print(get_location(path1, timestep), get_location(path2, timestep), 
                   get_location(path1, timestep) == get_location(path2, timestep),
@@ -38,6 +39,13 @@ def detect_collision(path1, path2, debug):
 
 
 def detect_collisions(paths, start_time=0, agents=[], debug=False):
+    """ Returns a list of first collisions between all robot pairs.
+    
+    paths       - All robot paths
+    start_time  - Start time of the first value of the paths variables
+    agents      - List of agent IDs
+    debug       - Debug parameter (Boolean) to generate additional print statements
+    """
     ##############################
     # Task 3.1: Return a list of first collisions between all robot pairs.
     #           A collision can be represented as dictionary that contains the id of the two robots, the vertex or edge
@@ -46,17 +54,20 @@ def detect_collisions(paths, start_time=0, agents=[], debug=False):
     
     collisions = []
     
+    # Print statement for debug purposes.
     if debug:
         print(paths)
 
     # We evaluate for each agent.
     for agent, path in enumerate(paths):
-      
+        
+        # If agent ids are specified, we set the agent id.
         if not agents == []:
             agent_id = agents[agent]
         else:
             agent_id = agent
             
+        # Print statement for debug purposes.
         if debug:
             print(agent_id, path)
         
@@ -65,11 +76,13 @@ def detect_collisions(paths, start_time=0, agents=[], debug=False):
         # at agent + 1 (it also should not evaluate interaction with itself.).
         for other_agent in range(agent + 1, len(paths)):
             
+            # If agent ids are specified, we set the agent id.
             if not agents == []:
                 other_agent_id = agents[other_agent]
             else:
                 other_agent_id = other_agent
             
+            # Print statement for debug purposes.
             if debug:
                 print("Comparing agent", agent_id, "and", other_agent_id)
             
@@ -84,7 +97,8 @@ def detect_collisions(paths, start_time=0, agents=[], debug=False):
                              'loc': deepcopy(collision_detection['loc']),
                              'timestep': collision_detection['timestep'] + start_time}                
                 collisions.append(collision)
-                
+    
+    # Print statement for debug purposes.
     if debug:
         print(sorted(collisions, key=lambda collisions: collisions['timestep']))
 
@@ -92,14 +106,10 @@ def detect_collisions(paths, start_time=0, agents=[], debug=False):
 
 
 def standard_splitting(collision):
-    ##############################
-    # Task 3.2: Return a list of (two) constraints to resolve the given collision
-    #           Vertex collision: the first constraint prevents the first agent to be at the specified location at the
-    #                            specified timestep, and the second constraint prevents the second agent to be at the
-    #                            specified location at the specified timestep.
-    #           Edge collision: the first constraint prevents the first agent to traverse the specified edge at the
-    #                          specified timestep, and the second constraint prevents the second agent to traverse the
-    #                          specified edge at the specified timestep
+    """ Returns a list of (two) constraints to resolve the given collision.
+    
+    collision   - Collision to split.
+    """
     
     constraints = []
     
@@ -124,28 +134,14 @@ def standard_splitting(collision):
 
     return constraints
 
-
-def disjoint_splitting(collision):
-    ##############################
-    # Task 4.1: Return a list of (two) constraints to resolve the given collision
-    #           Vertex collision: the first constraint enforces one agent to be at the specified location at the
-    #                            specified timestep, and the second constraint prevents the same agent to be at the
-    #                            same location at the timestep.
-    #           Edge collision: the first constraint enforces one agent to traverse the specified edge at the
-    #                          specified timestep, and the second constraint prevents the same agent to traverse the
-    #                          specified edge at the specified timestep
-    #           Choose the agent randomly
-
-    pass
-
-
 class CBSSolver(object):
     """The high-level search of CBS."""
 
-    def __init__(self, my_map, starts, goals):
+    def __init__(self, my_map, starts, goals, CPU_cutoff_time):
         """my_map   - list of lists specifying obstacle positions
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
+        CPU_cutoff_time - Cutoff time to prevent excessive long runs
         """
 
         self.my_map = my_map
@@ -156,20 +152,23 @@ class CBSSolver(object):
         self.num_of_generated = 0
         self.num_of_expanded = 0
         self.CPU_time = 0
+        self.CPU_cutoff_time = CPU_cutoff_time
 
         self.open_list = []
 
-        # compute heuristics for the low-level search
+        # Compute heuristics for the low-level search
         self.heuristics = []
         for goal in self.goals:
             self.heuristics.append(compute_heuristics(my_map, goal))
 
     def push_node(self, node):
+        """ Inserts node into the open list in an ordered fashion using heappush. """
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        #("Generate node {}".format(self.num_of_generated), "Cost:", node['cost'])
+        print("Generate node {}".format(self.num_of_generated), "Cost:", node['cost'])
         self.num_of_generated += 1
 
     def pop_node(self):
+        """ Extracts best node from the open list using heappop. """
         _, _, id, node = heapq.heappop(self.open_list)
         print("Expand node {}".format(id), "Cost:", node['cost'])
         self.num_of_expanded += 1
@@ -183,18 +182,22 @@ class CBSSolver(object):
 
         start_time = timer.time()
         
+        # File to use for debugging purposes
         debug_file = open("debug.txt", "w", buffering=1)
 
         # Generate the root node
+        # cost          - cost of solution presented in node
         # constraints   - list of constraints
         # paths         - list of paths, one for each agent
         #               [[(x11, y11), (x12, y12), ...], [(x21, y21), (x22, y22), ...], ...]
-        # collisions     - list of collisions in paths
+        # collisions    - list of collisions in paths
+        # iteration     - iteration of node
         root = {'cost': 0,
                 'constraints': [],
                 'paths': [],
                 'collisions': [],
                 'iteration': 0}
+        
         for i in range(self.num_of_agents):  # Find initial path for each agent
             path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
                           i, root['constraints'])
@@ -202,10 +205,12 @@ class CBSSolver(object):
                 raise BaseException('No solutions')
             root['paths'].append(path)
 
+        # Fill out the root node.
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
         self.push_node(root) # Add root node to open list.
         
+        # Optional code to animate multiple iterations.
         animations = dict()
         # animation = Animation(self.my_map, self.starts, self.goals, root['paths'])
         # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
@@ -223,30 +228,33 @@ class CBSSolver(object):
             
             # Check if the node is collision-free, and thus optimal.
             if len(node['collisions']) == 0:
-                #debug_file.close()
                 print(node)
                 return node['paths']
             
-            
+            # Grab the first collision
             collision = node['collisions'][0]
-            #if len(collision['loc']) == 2 and iteration < 997:
-                #iteration = 997
-                # print("Open list iteration:", iteration, self.open_list)
             constraints = standard_splitting(collision)
             
+            # For each constraint, attempt to generate a new child node.
             for constraint in constraints:
-                if timer.time() - start_time > 3:
-                    paths = False
-                    return paths
+                
+                # Cutoff point for statistical analysis
+                if timer.time() - start_time > self.CPU_cutoff_time:
+                    return None
+                
                 iteration += 1
+                
+                # Optional code for debugging purposes
                 if False: # iteration >= 997:
                     debug = True
                 else:
                     debug = False
                 
+                # Create new child node.
                 new_node = dict()
                 new_node['iteration'] = iteration
                 
+                # Optional code for debugging purposes.
                 if debug:
                     pass
                     animate = False
@@ -254,7 +262,8 @@ class CBSSolver(object):
                     if iteration in visualised_branch:
                         print("VISUALISE")
                         animate = True
-                        
+                
+                # Fill out new child node with paths and constraints from its parent.
                 new_node['constraints'] = deepcopy(node['constraints']) + [constraint]
                 new_node['paths'] = deepcopy(node['paths'])
                 
@@ -263,15 +272,16 @@ class CBSSolver(object):
                 path = a_star(self.my_map, self.starts[agent], self.goals[agent], 
                               self.heuristics[agent], agent, new_node['constraints'])
                 
+                # If there is no solution, this is not a feasible child node.
                 if path == None:
                     continue
                 
-                # Fill out the new node.
+                # Fill out the new node with the new path.
                 new_node['paths'][agent] = deepcopy(path)
                 new_node['collisions'] = detect_collisions(new_node['paths'])
                 new_node['cost'] = get_sum_of_cost(new_node['paths'])
                 
-                # Some code to visualise an entire branch of the algorithm.
+                # Optional code to visualise an entire branch of the algorithm for debugging purposes.
                 if debug:
                     pass
                     if animate:
@@ -294,13 +304,10 @@ class CBSSolver(object):
                 # Add the node to the open list.
                 self.push_node(new_node)
                 
-        #self.print_results(root)
         print("No solution found.")
-        #print("Final open list:", self.open_list)
-        #print("Final node:", node)
-        result = self.pop_node() # new_node #self.pop_node()
+        result = self.pop_node()
         print("Visualised node:", result)
-        #tree.show()
+        # tree.show()
         self.print_results(result)
         debug_file.close()
         return result['paths']

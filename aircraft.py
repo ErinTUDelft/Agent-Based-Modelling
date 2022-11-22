@@ -17,8 +17,7 @@ class AircraftDistributed(object):
 
     visible_area_range = 4
     number_of_steps_to_plan = 5
-    big_M = 10000
-    constraint_consideration_limit = 10**7
+    big_M = 10**10
 
     def __init__(self, my_map, start, goal, heuristics, agent_id):
         """
@@ -34,34 +33,47 @@ class AircraftDistributed(object):
         self.id = agent_id
         self.heuristics = heuristics
         self.location = self.start
+        
         self.travelled_path = []
+        self.constraints = []
         self.intended_path = []
+        self.used_paths = []
+        
         self.constraints_under_consideration = []
         self.path_under_consideration = []
-        self.used_paths = []
-        self.constraints = []
-        self.money = 10 #in thousands, but completely arbitrary ofcourse
+        
+        self.money = 10 
         self.utility_factor = 0.8
+        
         self.has_reached_goal = False
         self.path_unchanged = True
         
         self.update_path(self.calculate_new_path())
         
+        # Double check the problem is solvable.
+        if self.intended_path == None:
+            raise BaseException("Problem unsolvable, no inital path can be found.")
+        
     def update_path(self, new_path):
+        """ Updates the intended path and adds it to the used paths. 
+        
+        new_path    - New path to use
+        """
         self.intended_path = deepcopy(new_path)
         self.used_paths.append(deepcopy(new_path))
-
-        
-    def update_location(self, new_location):
-        self.location = new_location
         
     def get_current_time(self):
-        # Uses the travelled path to determine the current timestep.
+        """ Uses the travelled path to return the current timestep.
+        """
         time = len(self.travelled_path) - 1
         
         return time
         
-    def move(self, timestep):
+    def move(self):
+        """ Moves the agent one step forward along the intended path.
+        If the intended path is empty (e.g. agent is at goal location),
+        the agent stays at its current location.
+        """
         # If there is no intention to move, the agent should stay at the final
         # location of the travelled path.
         if self.intended_path == []:
@@ -74,8 +86,11 @@ class AircraftDistributed(object):
         self.travelled_path.append(new_location)
         
     def calculate_new_path(self, additional_constraints=[]):
-        # Use A* to calculate a new possible path.
+        """ Uses A* to calculate a new possible path for an agent.
         
+        additional_constraints  - Additional constraints to consider for
+                                    determining the new path.
+        """
         timestep = self.get_current_time()
         
         path = a_star(self.my_map, self.location, self.goal, 
@@ -83,11 +98,23 @@ class AircraftDistributed(object):
                       self.constraints + additional_constraints, 
                       timestep)
         
+        # A* uses the current location as the start location. However,
+        # the current location is already in the travelled path, and should
+        # thus not be added to the intended path.
+        # Except if this is the initialisation, when there is no travelled
+        # path yet.
+        #
+        # was path == None was added to catch errors.
         if not self.travelled_path == [] and not path == None:
             path.pop(0)
         return path
     
     def run_agent_radar(self, agents):
+        """ Returns the visible agents in range of the agent. 
+        
+        agents  - Agents whose location should be checked
+        """
+        
         # Determining the visible area. Currently the area is assumed square.
         visible_area = (range(self.location[0] - self.visible_area_range,
                               self.location[0] + self.visible_area_range), 
@@ -110,8 +137,11 @@ class AircraftDistributed(object):
         return visible_agents
     
     # Conflict determination
-    def share_intended_path(self, number_of_steps, goal_big_M=False):
-        # Function which returns the intended path of an agent.
+    def share_intended_path(self, number_of_steps):
+        """ Returns the agent's intended path. 
+        
+        number_of_steps     - Number of steps to share
+        """
         intended_path = self.intended_path[0:number_of_steps]
         
         # If there is no intention to move, the final location of the travelled
@@ -119,24 +149,13 @@ class AircraftDistributed(object):
         if intended_path == []:
             intended_path = [self.travelled_path[-1]]
             
-        
-        #print("Intended path", self.id, intended_path)
-            
-        #if intended_path[-1] == self.goal and \
-        #    len(self.path_under_consideration) <= number_of_steps:
-        #    #print("BIG MMM", intended_path + [intended_path[-1]] * self.big_M)
-        #    intended_path += [intended_path[-1]] * self.big_M
-        #    print("Big M applied in share intended path")
-            
-        #while len(intended_path) < number_of_steps:
-        #    intended_path.append(intended_path[-1])
-            
-        #print("Intended path", intended_path)
-            
         return intended_path
     
-    def share_path_under_consideration(self, number_of_steps, goal_big_M=False):
-        # Function which returns the path under consideration of an agent.
+    def share_path_under_consideration(self, number_of_steps):
+        """ Returns the path the agent is considering. 
+        
+        number_of_steps     - Number of steps to share
+        """
         intended_path = self.path_under_consideration[0:number_of_steps]
         
         # If there is no intention to move, the final location of the travelled
@@ -144,25 +163,17 @@ class AircraftDistributed(object):
         if intended_path == []:
             intended_path = [self.travelled_path[-1]]
             
-        #print("Intended path", self.id, intended_path)
-        
-        #if intended_path[-1] == self.goal and \
-        #    len(self.path_under_consideration) <= number_of_steps:
-        #    #print("BIG MMM", intended_path + [intended_path[-1]] * self.big_M)
-        #    intended_path += [intended_path[-1]] * self.big_M
-        #    
-        #    print("Big M applied in share path under consideration")
-            
-        #while len(intended_path) < number_of_steps:
-        #    intended_path.append(intended_path[-1])
-            
         return intended_path
     
     def check_conflict(self, visible_agent):
+        """ Returns the collisions with the visible_agent for the intended path.
         
+        visible_agent   - Visible agent to check against for conflict.
+        """
         # Obtain the paths of both agents. (Up to max. number of steps to plan)
-        own_path = [self.location] + self.share_intended_path(self.number_of_steps_to_plan, True)
-        other_path = [visible_agent.location] + visible_agent.share_intended_path(self.number_of_steps_to_plan, True)
+        # Note that the current location must be added for sake of completeness
+        own_path = [self.location] + self.share_intended_path(self.number_of_steps_to_plan)
+        other_path = [visible_agent.location] + visible_agent.share_intended_path(self.number_of_steps_to_plan)
         
         # Get the current timestep (necessary for proper constraint definition)
         timestep = self.get_current_time()
@@ -174,12 +185,21 @@ class AircraftDistributed(object):
         return collisions
     
     def check_conflict_under_consideration(self, visible_agent):
-        extra_steps_to_check = len(self.path_under_consideration) - len(self.intended_path)
+        """ Returns the collisions with the visible_agent for the agent's new
+        path it is considering.
         
+        visible_agent   - Visible agent to check against for conflict.
+        """
+        # When the new path under consideration is longer than the intended path,
+        # the agent needs to ensure those extra steps do not cause conflict.
+        # See report for full explanation.
+        extra_steps_to_check = len(self.path_under_consideration) - len(self.intended_path)
         number_of_steps = self.number_of_steps_to_plan + extra_steps_to_check
         
-        own_path = [self.location] + self.share_path_under_consideration(number_of_steps, True)
-        other_path = [visible_agent.location] + visible_agent.share_intended_path(number_of_steps, True)
+        # Obtain the paths of both agents. (Up to max. number of steps to plan)
+        # Note that the current location must be added for sake of completeness
+        own_path = [self.location] + self.share_path_under_consideration(number_of_steps)
+        other_path = [visible_agent.location] + visible_agent.share_intended_path(number_of_steps)
         
         # Get the current timestep (necessary for proper constraint definition)
         timestep = self.get_current_time()
@@ -189,251 +209,143 @@ class AircraftDistributed(object):
                                        [self.id, visible_agent.id])
         return collisions
     
-    # Negotiation (Erin)
-    
     def consider_new_path(self, constraints):
-        length_original_path = len(self.intended_path) #finds the length of the original intended path
+        """ Lets an agent consider a new path, with the addition of certain constraints.
+        Returns the added cost (multiplied by utility factor) of the path under consideration.
         
+        constraints     - Constraints to add for the calculation of the new path.
+        """
+        #Finds the length of the original intended path
+        length_original_path = len(self.intended_path) 
+        
+        # Add the extra constraints to the constraints under consideration.
         for constraint in constraints:
             self.constraints_under_consideration.append(constraint)
+            
+        # Calculate the new path.
         path_to_consider = self.calculate_new_path(self.constraints_under_consideration)
-        #if self.get_current_time() > 0:
-        #    self.path_under_consideration = deepcopy(self.path_under_consideration[1:])
-        
+
+        # If A* finds no solution, return a significantly large cost. The agent
+        # will then win the negotiation (in most cases).
         if path_to_consider == None:
             return self.big_M * self.utility_factor
         
         self.path_under_consideration = path_to_consider
-        
         length_new_path = len(self.path_under_consideration)
-        
-        #print("My", self.id, " new path is:", self.path_under_consideration)
-        
         added_cost = length_new_path - length_original_path
         
         return added_cost*self.utility_factor
-        
-        
-    def respond_to_negotiation(self):
-        
-
-        # What is known?
-        # The location of the current agent
-        # The location of the visible agent
-        # The location of the conflict
-        # The timestep of the conflict
-        # The location of an alternative route
-        # What the extra cost is of the alternative route
-        pass #TODO
     
     def negotiate_new_path(self, visible_agent, collisions, start_time, cutoff_time):
-        # visible_agent.respond_to_negotiation()
+        """ Method to let an agent negotiate with a visible agent to solve a
+        conflict and thus avoid a collision.
         
-        #print("Negotation started by agent", self.id, "with agent", visible_agent.id)
+        visible_agent   - Agent to negotiate with
+        collisions      - Collisions with visible_agent
+        start_time      - CPU start time of the simulation
+        cutoff_time     - CPU cutoff time of the simulation        
+        """
         
+        # print("Negotation started by agent", self.id, "with agent", visible_agent.id)
+        
+        # Check collisions
         own_collisions = collisions
         opponents_collisions = visible_agent.check_conflict(self)
+        agent_collisions = [own_collisions, opponents_collisions]
         
+        # Set up paths under consideration to match the intended path.
         self.path_under_consideration = self.intended_path
         visible_agent.path_under_consideration = visible_agent.intended_path
         
-        iteration = 0
+        agents = [self, visible_agent]
+        costs = [0, 0]
         
-        
-        while not own_collisions == []:
+        # For both agents, determine a possible path that they could offer in
+        # the bidding. These paths must be conflict-free. For that reason, they
+        # loop until collisions == [].
+        for i, agent in enumerate(agents):
             
-            #print("Travelled path", self.travelled_path)
-            #print("Other's travelled path", visible_agent.travelled_path)
+            other_agent = agents[not i]
             
-            
-            #print("Used paths", self.id, self.used_paths)
-            #print("Used paths", visible_agent.id, visible_agent.used_paths)
-            
-            #print("Full path", self.id, self.travelled_path + self.path_under_consideration)
-            #print("Full path", visible_agent.id, visible_agent.travelled_path + visible_agent.path_under_consideration)
-            
-            #print("Own collisions:", own_collisions)
+            while not agent_collisions[i] == []:
+                
+                # Cut off if iteration takes too long.
+                CPU_time = timer.time() - start_time
+                if CPU_time > cutoff_time:
+                    return True
+                
+                constraints = []
+                
+                # When the new path under consideration is longer than the intended path,
+                # the agent needs to ensure those extra steps do not cause conflict.
+                # See report for full explanation.
+                extra_steps_to_check = len(agent.path_under_consideration) - len(agent.intended_path)
+                
+                # It is possible to use two different approaches. One can either apply
+                # constraints based on collisions (more a CBS approach) or apply constraints
+                # based on the other agent's full path (more a prioritised planning approach).
+                # In this case, the prioritised-based approach broke late in the process,
+                # and still needs to be fixed. Preliminary results showed the collision-
+                # based approach to be less computationally intensive and more optimal.                
+                if approach == "collision-based":
+                    for collision in agent_collisions[i]:
+                        
+                        # If the collision is outside of the range of number of steps
+                        # to plan, we can disregard it.
+                        if collision['timestep'] - agent.get_current_time() > \
+                            agent.number_of_steps_to_plan + extra_steps_to_check:
+                            continue
+                        collision_split = standard_splitting(collision)
+                        constraints.append(collision_split[0])
+                        
+                if approach == "prioritised-based":
                     
-            CPU_time = timer.time() - start_time
-            
-            if CPU_time > cutoff_time:
-                return True
-            
-            own_constraints = []
-            
-            extra_steps_to_check = len(self.path_under_consideration) - len(self.intended_path)
-            
-            if approach == "collision-based":
-                for collision in own_collisions:
-                    if collision['timestep'] - self.get_current_time() > \
-                        self.number_of_steps_to_plan + extra_steps_to_check:
-                        continue
-                    collision_split = standard_splitting(collision)
-                    own_constraints.append(collision_split[0])
+                    for i, location in enumerate(other_agent.intended_path[0:agent.number_of_steps_to_plan
+                                                                             + extra_steps_to_check]):
+                        constraints.append({
+                        'agent': agent.id,
+                        'loc': [location],
+                        'timestep': agent.get_current_time() + i + 1})
+                        constraints.append({
+                        'agent': agent.id,
+                        'loc': [location, get_location(other_agent.intended_path, i-1)],
+                        'timestep': agent.get_current_time() + i + 1})
                 
-            #print(self.path_under_consideration)
-            #print(self.path_under_consideration[0:self.number_of_steps_to_plan])
-            #print(visible_agent.intended_path[0:visible_agent.number_of_steps_to_plan][-1])
-            
-            #if visible_agent.intended_path[0:visible_agent.number_of_steps_to_plan][-1] == visible_agent.goal and \
-            #    len(visible_agent.intended_path) <= visible_agent.number_of_steps_to_plan:
-            #        
-            #    print("I ran woo")
-            #    
-            #    for i in range(self.big_M):
-            #        own_constraints.append({
-            #            'agent': self.id,
-            #            'loc': [visible_agent.goal],
-            #            'timestep': self.get_current_time() + len(visible_agent.intended_path) + i + 2})
-            
-            if approach == "prioritised-based":
+                # We determine the cost of the new path.
+                costs[i] = agent.consider_new_path(constraints)
                 
-                for i, location in enumerate(visible_agent.intended_path[0:self.number_of_steps_to_plan
-                                                                         + extra_steps_to_check]):
-                    own_constraints.append({
-                    'agent': self.id,
-                    'loc': [location],
-                    'timestep': self.get_current_time() + i + 1})
-                    own_constraints.append({
-                    'agent': self.id,
-                    'loc': [location, get_location(visible_agent.intended_path, i-1)],
-                    'timestep': self.get_current_time() + i + 1})
-            
-            
+                # If the cost is massive, we are at the limits of what we can offer.
+                # See consider_new_path() for more.
+                if costs[i] == agent.big_M * agent.utility_factor:
+                    break
                 
-            #print("Own constraints", own_constraints)
-            
-            # We are doing Vickrey bidding here: a monetary value is given to the 
-            # other for being allowed to stay on course
-            cost_of_own_new_path = self.consider_new_path(own_constraints)
-            
-            if cost_of_own_new_path == self.big_M * self.utility_factor:
-                break
-            
-            #print("New path under consideration", self.id, self.path_under_consideration)
-            
-            own_collisions = self.check_conflict_under_consideration(visible_agent)
-            
-            if len(self.constraints_under_consideration) > self.constraint_consideration_limit:
-                exit
-                
-            animations = dict()
-            animate = False
-            
-            if animate:
-                animations[iteration] = Animation(self.my_map, [self.start, visible_agent.start], 
-                                                  [self.goal, visible_agent.goal],
-                                                  [self.travelled_path+self.path_under_consideration, visible_agent.travelled_path+visible_agent.path_under_consideration])
-                #animations[iteration].show()
-                #timer.sleep(1)
-                animations[iteration].show()
-                iteration +=1
-                start_time = timer.time()
-                while timer.time() - start_time < 1:
-                    pass
-            
-        while not opponents_collisions == []:
-            
-            #print("Opponents collisions:", opponents_collisions)
-            
-            
-            #print("Travelled path", self.travelled_path)
-            #print("Other's travelled path", visible_agent.travelled_path)
-            
-            #print("Used paths", self.id, self.used_paths)
-            #print("Used paths", visible_agent.id, visible_agent.used_paths)
-                    
-            CPU_time = timer.time() - start_time
-            
-            if CPU_time > cutoff_time:
-                return True
-            
-            
-            opponents_constraints = []
-
-            
-            
-            extra_steps_to_check = len(visible_agent.path_under_consideration) - len(visible_agent.intended_path)
-            
-            if approach == "collision-based":
-            
-                for collision in opponents_collisions:
-                    if collision['timestep'] - visible_agent.get_current_time() > \
-                        visible_agent.number_of_steps_to_plan + extra_steps_to_check:
-                        continue
-                    collision_split = standard_splitting(collision)
-                    opponents_constraints.append(collision_split[0])
-                    
-            if approach == "prioritised-based":
-            
-                for i, location in enumerate(self.intended_path[0:self.number_of_steps_to_plan
-                                                                + extra_steps_to_check]):
-                    opponents_constraints.append({
-                    'agent': visible_agent.id,
-                    'loc': [location],
-                    'timestep': visible_agent.get_current_time() + i + 1})
-                    opponents_constraints.append({
-                    'agent': visible_agent.id,
-                    'loc': [location, get_location(self.intended_path, i-1)],
-                    'timestep': visible_agent.get_current_time() + i + 1})
-                
-            #if self.intended_path[0:self.number_of_steps_to_plan][-1] == self.goal and \
-            #    len(self.intended_path) <= self.number_of_steps_to_plan:
-            #        
-            #    print("I ran woo")
-            #    
-            #    for i in range(visible_agent.big_M):
-            #        own_constraints.append({
-            #            'agent': visible_agent.id,
-            #            'loc': [self.goal],
-            #            'timestep': visible_agent.get_current_time() + len(self.intended_path) + i})
-                    
-            
-            #print("Opponents constraints", opponents_constraints)
-            # We are doing Vickrey bidding here: a monetary value is given to the 
-            # other for being allowed to stay on course
-            cost_of_opponents_new_path = visible_agent.consider_new_path(opponents_constraints)
-            
-            if cost_of_own_new_path == visible_agent.big_M * visible_agent.utility_factor:
-                break
-            
-            #print("New path under consideration", visible_agent.id, visible_agent.path_under_consideration)
-            
-            opponents_collisions = visible_agent.check_conflict_under_consideration(self)
-            
-            if len(visible_agent.constraints_under_consideration) > self.constraint_consideration_limit:
-                exit
+                # We check again for collisions.
+                agent_collisions[i] = agent.check_conflict_under_consideration(other_agent)
         
-        #print("Timestep", self.get_current_time())
-        #print("Own location", self.location)
-        #print("Own possible path", self.id, self.location, self.path_under_consideration)
-        #print("Opponents intended path", visible_agent.location, visible_agent.id, visible_agent.intended_path)
-        #print("Opponents possible path", visible_agent.location, visible_agent.id, visible_agent.path_under_consideration)
-        #print("Own intended path", self.location, self.id, self.intended_path)
+        # We extract the costs from the costs list.
+        cost_of_own_new_path = costs[0]
+        cost_of_opponents_new_path = costs[1]
         
-        own_remaining_money = self.money - cost_of_opponents_new_path
-        opponents_remaining_money = visible_agent.money - cost_of_own_new_path
-        
-        #print("proposed",cost_of_own_new_path)
-        #print(cost_of_opponents_new_path)
         # Find whether the bid gets accepted or not
         accept = False
         if cost_of_own_new_path > cost_of_opponents_new_path:
             accept = True
             
-        # TODO: Solve edge case of both having negative money.
+        # If an agent has no money, it must accept the other agent's proposal.
+        # Except if that agent is in even worse debt than the first agent.
         if self.money < 0 and self.money < visible_agent.money:
             accept = False
         elif visible_agent.money < 0 and visible_agent.money < self.money:
             accept = True
-        if abs(cost_of_own_new_path - cost_of_opponents_new_path) < 0.001: #within bounds to prevent floating point errors
-            flip = random.randint(0,1) #if the bids are the same, a cointoss will decide who wins
-            #print("It's a coin flip.")
+            
+        # If the bids are the same, a coin toss determines who gets the bid.
+        if abs(cost_of_own_new_path - cost_of_opponents_new_path) < 0.001: # Floating point correction
+            flip = random.randint(0,1)
             if flip == 0:
                 accept = True
             else:
                 accept = False
-
+        
         if accept:
             # Visible agent will use a new path
             visible_agent.constraints += visible_agent.constraints_under_consideration
@@ -441,7 +353,12 @@ class AircraftDistributed(object):
             visible_agent.path_unchanged = False
             self.money -= cost_of_opponents_new_path
             visible_agent.money += cost_of_opponents_new_path
-            #print(f"Agent {visible_agent.id} accepts my (agent: {self.id}) proposal and will change course ".format())
+            
+            # Double check the new constraints are feasible
+            if visible_agent.intended_path == None:
+                return True
+            
+            # print(f"Agent {visible_agent.id} accepts my (agent: {self.id}) proposal and will change course ".format())
         else:
             # Current agent will use a new path
             self.constraints += self.constraints_under_consideration
@@ -449,10 +366,11 @@ class AircraftDistributed(object):
             self.path_unchanged = False
             visible_agent.money -= cost_of_own_new_path
             self.money += cost_of_own_new_path
-            #print(f"Agent {self.id} accepts my (agent: {visible_agent.id}) proposal and will change course ")
+            
+            # Double check the new constraints are feasible
+            if self.intended_path == None:
+                return True
+            # print(f"Agent {self.id} accepts my (agent: {visible_agent.id}) proposal and will change course ")
             
         self.constraints_under_consideration = []
         visible_agent.constraints_under_consideration = []
-        
-        #print("New intended path agent", self.id, self.location, self.intended_path)
-        #print("New intended path agent", visible_agent.id, visible_agent.location, visible_agent.intended_path)

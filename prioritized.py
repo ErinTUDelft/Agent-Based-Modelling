@@ -7,24 +7,24 @@ from copy import deepcopy
 class PrioritizedPlanningSolver(object):
     """A planner that plans for each robot sequentially."""
 
-    def __init__(self, my_map, starts, goals):
-        """my_map   - list of lists specifying obstacle positions
-        starts      - [(x1, y1), (x2, y2), ...] list of start locations
-        goals       - [(x1, y1), (x2, y2), ...] list of goal locations
+    def __init__(self, my_map, starts, goals, CPU_cutoff_time):
+        """my_map       - list of lists specifying obstacle positions
+        starts          - [(x1, y1), (x2, y2), ...] list of start locations
+        goals           - [(x1, y1), (x2, y2), ...] list of goal locations
+        CPU_cutoff_time - Cutoff time to prevent excessive long runs
         """
 
         self.my_map = my_map
         self.starts = starts
         self.goals = goals
         self.num_of_agents = len(goals)
-        self.M = 20
         self.CPU_time = 0
+        self.CPU_cutoff_time = CPU_cutoff_time
 
-        # compute heuristics for the low-level search
+        # Compute heuristics for the low-level search
         self.heuristics = []
         for goal in self.goals:
             self.heuristics.append(compute_heuristics(my_map, goal))
-        # print("heuristics:", self.heuristics)
 
     def find_solution(self):
         """ Finds paths for all agents from their start locations to their goal locations."""
@@ -32,20 +32,24 @@ class PrioritizedPlanningSolver(object):
         start_time = timer.time()
         result = []
         constraints = []
+        
+        # We use the pathfinding map to block out goal locations where other agents have settled.
         self.pathfinding_map = deepcopy(self.my_map)
 
-        for i in range(self.num_of_agents):  # Find path for each agent
+        # Find path for each agent
+        for i in range(self.num_of_agents): 
             path = a_star(self.pathfinding_map, self.starts[i], self.goals[i], self.heuristics[i],
                            i, constraints)
+            
+            # If there is no solution, the planning has failed.
+            if path == None:
+                return None
+            
+            # If the allowed time has elapsed, the simulation is aborted.
+            if timer.time() - start_time > self.CPU_cutoff_time:
+                return None
 
-            if path is None:
-                path = False
-                return path
-                
-            if path is False:
-                return path 
-
-
+            # Add vertex and edge constraints for the path traversed by other agents.
             j = 0
             while j < (len(path)-1): 
                 for other_agent in range(i+1, self.num_of_agents):
@@ -56,13 +60,16 @@ class PrioritizedPlanningSolver(object):
                     
               
                 j += 1
-
+            
+            # Once an agent is at its goal location, that location is blocked out
+            # on the pathfinding map for other agents.
             self.pathfinding_map[path[-1][0]][path[-1][1]] = True
+            
+            # The heuristics must then be recalculated.
             self.heuristics = []
             for goal in self.goals:
                 self.heuristics.append(compute_heuristics(self.pathfinding_map, goal))
-            # if len(path) > self.M:
-            #     pass #raise BaseException('No solutions')      
+ 
             result.append(path)
         
 
