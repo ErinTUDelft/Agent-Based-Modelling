@@ -156,7 +156,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints, timestep =
         #print(my_map)
         #animation = Animation(my_map, (start_loc,(0,1)), (goal_loc,(5,0)), [])
         #animation.show()
-        return False
+        return None
         #raise BaseException("no solutions")
 
     h_value = h_values[start_loc]
