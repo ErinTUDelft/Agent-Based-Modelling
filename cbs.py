@@ -164,13 +164,13 @@ class CBSSolver(object):
     def push_node(self, node):
         """ Inserts node into the open list in an ordered fashion using heappush. """
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        print("Generate node {}".format(self.num_of_generated), "Cost:", node['cost'])
+        #print("Generate node {}".format(self.num_of_generated), "Cost:", node['cost'])
         self.num_of_generated += 1
 
     def pop_node(self):
         """ Extracts best node from the open list using heappop. """
         _, _, id, node = heapq.heappop(self.open_list)
-        print("Expand node {}".format(id), "Cost:", node['cost'])
+        #print("Expand node {}".format(id), "Cost:", node['cost'])
         self.num_of_expanded += 1
         return node
 

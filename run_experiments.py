@@ -9,7 +9,6 @@ from random import randint
 from random import shuffle
 from math import inf
 import matplotlib.pyplot as plt
-import statistics
 import argparse
 import glob
 from pathlib import Path
@@ -22,7 +21,8 @@ from single_agent_planner import get_sum_of_cost
 import pandas as pd
 import time as timer
 SOLVER = "Prioritized"
-from random import randint
+
+
 
 # Determine whether to perform statistical analysis or to perform a single simulation.
 statistical_analysis = True
@@ -35,11 +35,14 @@ full_random = True
 CPU_cutoff_time = 5
 
 # Algorithms to consider for statistical analysis
+simulations_per_agent = 20
+agent_range = range(2,11)
 Prioritized = True
-PrioritizedPlus = False
 PrioritizedPlusSimple = True
-CBS = True 
-Distributed = False
+PrioritizedPlus = True
+
+CBS =  True 
+Distributed = True 
 
 algorithms = ["Prioritized", "PrioritizedPlus", "PrioritizedPlusSimple", "CBS", "Distributed"]
 algorithms_used = [Prioritized, PrioritizedPlus, PrioritizedPlusSimple, CBS, Distributed]
@@ -87,6 +90,12 @@ def print_locations(my_map, locations):
     
 
 def random_start(number_of_agents, start_locs=None, goal_locs=None):
+    """
+    This function spawns the agent randomly on the first two columns, and assigns their location on the opposite 
+    side of the map.
+    """
+
+
     if start_locs == None:
         start_locs = []
     if goal_locs == None:
@@ -179,7 +188,7 @@ def cost_plot(dfs):
     minimum, maximum and mean value for each number of agents. These values are then plotted. 
     """
     plt.figure()
-    plt.title('Total costs per number of agents ')
+    #plt.title('Total costs per number of agents ')
     plt.xlabel('Agents [-]')
     plt.ylabel('Total cost [-]')
     
@@ -189,7 +198,7 @@ def cost_plot(dfs):
         color = algorithm_colors[df_key]
         dfs[df_key].groupby('agents')['costs'].max().plot(color = color, label="", alpha=0.35)
         dfs[df_key].groupby('agents')['costs'].min().plot(color = color, label="", alpha=0.35)
-        dfs[df_key].groupby('agents')['costs'].mean().plot(color = color, label=df_key)
+        dfs[df_key].groupby('agents')['costs'].mean().plot(color = color, label=df_key, ylim = 0)
         #plt.legend(['maximum', 'minimum' , 'mean'])
         
         costs_max = dfs[df_key].groupby('agents')['costs'].max()
@@ -200,9 +209,9 @@ def cost_plot(dfs):
         
         plt.fill_between(agent_range,costs_max, costs_min, color=color, alpha=0.25)
         
-        print("woopdoop")
+
    
-    plt.ylim(cost_min, cost_max)
+ 
     plt.legend()
    
     #plt.fill_between(costs_max,costs_min)
@@ -214,25 +223,33 @@ def cost_plot(dfs):
 def succes_plot(dfs):
     """"
     This function takes the large created dataframe, and categorizes it by grouping the 
-    minimum, maximum and mean value for each number of agents. These values are then plotted. 
+    success rates for the different algorithms. As the successes are stored as either True or False Boolean's
+    (Which are represented by 1's and 0's, the average can be taken. These values are then plotted. 
     """
     plt.figure()
-    plt.title('Success rate per number of agents')
+    #plt.title('Success rate per number of agents')
     plt.xlabel('Agents [-]')
     plt.ylabel('Success rate [-]')
-    plt.ylim(0, 1.2)
+    #plt.ylim(0, 1.2)
     for df_key in dfs.keys():
         color = algorithm_colors[df_key]
         df = dfs[df_key]
         success_rate = df.groupby('agents')['success'].mean()
-        success_rate.plot(label=df_key, color=color)
+        success_rate.plot(label=df_key, color=color, ylim = [0,1.2])
         
     plt.legend()
     plt.show()
+    
 
 def finish_times_plot(dfs):
+    """
+    The finish times are defined as the time it takes for all the agents to reach their goal location. 
+    This value is found by taking the maximum path length of each solution. 
+    """
+
+
     plt.figure()
-    plt.title('Finish times per number of agents')
+    #plt.title('Finish times per number of agents')
     plt.xlabel('Agents [-]')
     plt.ylabel('Finish time [-]')
     
@@ -242,7 +259,7 @@ def finish_times_plot(dfs):
         
         dfs[df_key].groupby('agents')['finish times'].max().plot(color=color, label="", alpha=0.35)
         dfs[df_key].groupby('agents')['finish times'].min().plot(color=color, label="", alpha=0.35)
-        dfs[df_key].groupby('agents')['finish times'].mean().plot(color=color, label=df_key)
+        dfs[df_key].groupby('agents')['finish times'].mean().plot(color=color, label=df_key, ylim = 0)
         
         finishtime_max = dfs[df_key].groupby('agents')['finish times'].max()
         finishtime_min = dfs[df_key].groupby('agents')['finish times'].min()
@@ -256,7 +273,7 @@ def finish_times_plot(dfs):
     
 def cpu_times_plot(dfs):
     plt.figure() 
-    plt.title('CPU times per number of agents')
+
     plt.xlabel('Agents [-]')
     plt.ylabel('CPU time [s]')
     for df_key in dfs.keys():
@@ -265,8 +282,8 @@ def cpu_times_plot(dfs):
     plt.legend()
     plt.show()
     
-def add_to_database(algorithm, paths):
-    cpu_time = timer.time() - start_time
+def add_to_database(algorithm, paths, cpu_time):
+    #cpu_time = timer.time() - start_time
     
     if not paths == None: 
         costs[algorithm].append(get_sum_of_cost(paths))
@@ -355,28 +372,22 @@ if __name__ == '__main__':
                 if not algorithms_used[i]:
                     continue
                 
-                print(algorithm)
+                #print(algorithm)
                 
                 costs[algorithm] = []
                 finish_times[algorithm] = []
                 success[algorithm] = []
                 cpu_times[algorithm] = []
                 
-            #costs = []
-            #finishtimes = []
-            #success = []
-            #cpu_times = []
+
             nums_of_agents = []
             
-            agent_range = range(2,11)
-            
             for agents in agent_range:
-                #print("agents", agents)
-                #agents = 5
-            
-                for simulations in range(5):
+
+         
+                for simulations in range(simulations_per_agent):
                     nums_of_agents.append(agents)
-                    
+                   
                     my_map, starts, goals = import_mapf_instance(file)
                     starts, goals = random_start(agents)
                     
@@ -384,52 +395,32 @@ if __name__ == '__main__':
                     
             
                     if CBS:
+                        start_time = timer.time()
                         #print("***Run CBS***")
                         cbs = CBSSolver(my_map, starts, goals, CPU_cutoff_time)
                         paths = cbs.find_solution(args.disjoint)
-                        add_to_database("CBS", paths)
-                        # cpu_time = timer.time() - start_time
+                        cpu_time = timer.time() - start_time
+                        add_to_database("CBS", paths, cpu_time)
                         
-                        # if not paths == None: 
-                        #     costs.append(get_sum_of_cost(paths))
-                        #     finishtimes.append(len(max(paths)))
-                        #     success.append(True)
-                        #     cpu_times.append(cpu_time)
-                            
-                        # if paths == None:
-                        #     costs.append(None)
-                        #     finishtimes.append(None)
-                        #     success.append(False)
-                        #     cpu_times.append(None)
+
                             
                     if Prioritized:
-                        #print("***Run Prioritized***")
-                        # my_map, starts, goals = import_mapf_instance(file)
-                        # starts, goals = random_start(agents)
+                        start_time = timer.time()
                         solver = PrioritizedPlanningSolver(my_map, starts, goals, CPU_cutoff_time)
                         paths = solver.find_solution()
-                        add_to_database("Prioritized", paths)
-                        # cpu_time = timer.time() - start_time
                         
-                        # #print(paths)
-                        # #cost = get_sum_of_cost(paths)
+                        cpu_time = timer.time() - start_time
+                        add_to_database("Prioritized", paths,cpu_time)
                         
-                        # if not paths == None: 
-                        #     costs.append(get_sum_of_cost(paths))
-                        #     finishtimes.append(len(max(paths)))
-                        #     success.append(True)
-                        #     cpu_times.append(cpu_time)
-                            
-                        # if paths == None:
-                        #     costs.append(None)
-                        #     finishtimes.append(None)
-                        #     success.append(False)
-                        #     cpu_times.append(None)
+                        
+                        #print(cpu_times['Prioritized'])
+                        
                             
                     if PrioritizedPlusSimple:
+                        start_time = timer.time()
                         paths = None
                         while paths == None:
-                            start_time = timer.time()
+            
                             solver = PrioritizedPlanningSolver(my_map, starts, goals, CPU_cutoff_time)
                             paths = solver.find_solution()
                             
@@ -439,48 +430,24 @@ if __name__ == '__main__':
                             res1, res2 = zip(*temp)
                             starts, goals = list(res1), list(res2)
                             
-                            if timer.time() - start_time > CPU_cutoff_time:
-                                paths = None
-                        
-                        # cpu_time = timer.time() - start_time        
-                        
-                        # if not paths == None: 
-                        #     if get_sum_of_cost(paths) > 400:
-                        #         animation = Animation(my_map, starts, goals, paths)
-                        #         animation.show()
+                        cpu_time = timer.time() - start_time #timer.time() - start_time
+                        add_to_database("PrioritizedPlusSimple", paths, cpu_time)        
                             
-                        add_to_database("PrioritizedPlusSimple", paths)        
-                            
-                        #     costs.append(get_sum_of_cost(paths))
-                        #     finish_times.append(len(max(paths)))
-                        #     success.append(True)
-                        #     cpu_times.append(cpu_time)
-                            
-                        # if paths == None:
-                        #     costs.append(None)
-                        #     finish_times.append(None)
-                        #     success.append(False)
-                        #     cpu_times.append(None)    
-                    
-                    # This one should not be necessary?
+    
+ 
                     if PrioritizedPlus:
-                        #print("***Run Prioritized***")
-                        # my_map, starts, goals = import_mapf_instance(file)
-                        # starts, goals = random_start(agents)
-                    
-                        #solver = DistributedPlanningSolver(my_map, starts, goals, CPU_cutoff_time) 
-                        #paths1 = solver.find_solution()
-                        
-                        paths1 = None
-                        
-                        
+                        start_time = timer.time()
+      
+                        solver = DistributedPlanningSolver(my_map, starts, goals, CPU_cutoff_time)
+                        paths1 = solver.find_solution()
+                     
+        
                         paths2 = None
                         
                         if paths2 == None:
                             while paths2 == None:
-                                start_time = timer.time()
-                                
-                                print(starts, goals)
+                               
+    
                                 solver = PrioritizedPlanningSolver(my_map, starts, goals, CPU_cutoff_time)
                                 paths2 = solver.find_solution()
                                 
@@ -489,72 +456,50 @@ if __name__ == '__main__':
                                 
                                 temp = list(zip(starts, goals))
                                 shuffle(temp)
-                                #("temp", temp)
-                                # except:
-                                #     print("starts:", starts)
-                                #     print("goals:", goals)
-                                #     print("temp:", temp)
-                                #     raise BaseException()
                                 res1, res2 = zip(*temp)
                                 starts, goals = list(res1), list(res2)
-                                
-                                if timer.time() - start_time > CPU_cutoff_time:
-                                    paths2 = None
+
                                 
                         if paths1 == None and not paths2 == None:
                             paths = paths2
                         elif not paths1 == None and not paths2 == None:       
-                            paths = min(paths1, paths2)
-                        elif not paths1 == None and paths2 == None:
-                            paths = paths1
+                            #paths = min(len(paths1), paths2) this was a faulty approach!
+                            
+                            if get_sum_of_cost(paths1) > get_sum_of_cost(paths2):
+                                paths = paths2
+                            else:
+                                paths = paths1
+                        #elif not paths1 == None and paths2 == None:
+                            #paths = paths1
                         else: 
                             paths = None
-                        # cpu_time = timer.time() - start_time
-                        
-                        # if get_sum_of_cost(paths) > 400:
-                        #     print("paths1", paths1)
-                        #     print("paths2", paths2)
-       
+                            
+                        if get_sum_of_cost(paths) > 400:
+                            print(paths1)
+                            print("paths2", paths2)
+                        # Some simulations would be very inefficient, this condition visualizes those edge cases
                         if not paths == None: 
-                            if get_sum_of_cost(paths) > 400:
+                            if get_sum_of_cost(paths) > 400: 
                                 animation = Animation(my_map, starts, goals, paths)
                                 animation.show()
+                                
+                        cpu_time = timer.time() - start_time
+                        add_to_database("PrioritizedPlus", paths, cpu_time)        
                         
-                        add_to_database("PrioritizedPlus", paths)        
-                        
-                        #     costs.append(get_sum_of_cost(paths))
-                        #     finishtimes.append(len(max(paths)))
-                        #     success.append(True)
-                        #     cpu_times.append(cpu_time)
-                            
-                        # if paths == None:
-                        #     costs.append(None)
-                        #     finishtimes.append(None)
-                        #     success.append(False)
-                        #     cpu_times.append(None)    
+
     
-                    if Distributed:  # Wrapper of distributed planning solver class
+                    if Distributed:
+                        start_time = timer.time() 
                         #print("***Run Distributed Planning***")
                         solver = DistributedPlanningSolver(my_map, starts, goals, CPU_cutoff_time) 
                         paths = solver.find_solution()
-                        add_to_database("Distributed", paths)
-                        # cpu_time = timer.time() - start_time
+                        cpu_time = timer.time() - start_time
+                        add_to_database("Distributed", paths, cpu_time)
+                
                         
-                        # if not paths == None: 
-                        #     costs.append(get_sum_of_cost(paths))
-                        #     finishtimes.append(len(max(paths)))
-                        #     success.append(True)
-                        #     cpu_times.append(cpu_time)
-                            
-                        # if paths == None:
-                        #     costs.append(None)
-                        #     finishtimes.append(None)
-                        #     success.append(False)
-                        #     cpu_times.append(None)
-                    #else: 
-                        #raise RuntimeError("Unknown solver!")
+   
                         
-            print(costs, finish_times, success, cpu_times, nums_of_agents)
+            #print(costs, finish_times, success, cpu_times, nums_of_agents)
             
             dfs = dict()
             
@@ -570,19 +515,7 @@ if __name__ == '__main__':
                          }
                 
                 dfs[algorithm] = pd.DataFrame(data = d)
-            
-            # d = {'costs': costs, 
-            #          'finish times': finish_times,
-            #          'success': success,
-            #          'cpu_times': cpu_times,
-            #          'agents': nums_of_agents
-            #          }
-            # df = pd.DataFrame(data = d)
-            # print(paths)
-            # print(costs)
-            # print(finishtimes)
-            # print(df)
-            
+
             
             cost_plot(dfs)
             succes_plot(dfs)
