@@ -216,7 +216,7 @@ def cost_plot(dfs):
    
  
     plt.legend()
-    plt.ylim(22, 42) # 1.05*current_cost_max)
+    plt.ylim(0, 1.05*current_cost_max)
    
     #plt.fill_between(costs_max,costs_min)
     #successrate = df.groupby('agents')['success'].mean()
@@ -279,7 +279,7 @@ def finish_times_plot(dfs):
     
         plt.fill_between(agent_range,finish_times_max, finish_times_min, color=color, alpha=0.25)
     plt.legend()
-    plt.ylim(22, 42) # 1.05*current_finish_time_max)
+    plt.ylim(0, 1.05*current_finish_time_max)
     plt.show()
     
 def cpu_times_plot(dfs):
