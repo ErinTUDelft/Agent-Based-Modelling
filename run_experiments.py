@@ -35,12 +35,12 @@ full_random = True
 CPU_cutoff_time = 5
 
 # Algorithms to consider for statistical analysis
-simulations_per_agent = 20
+simulations_per_agent = 50
 agent_range = range(2,11)
+
 Prioritized = True
 PrioritizedPlusSimple = True
 PrioritizedPlus = True
-
 CBS =  True 
 Distributed = True 
 
@@ -115,7 +115,7 @@ def random_start(number_of_agents, start_locs=None, goal_locs=None):
                 goal_locs.append(valuepair_goal)
                 start_locs.append(valuepair_start)
                 break 
-        print(start_locs, goal_locs)
+        # print(start_locs, goal_locs)
                 
     return start_locs, goal_locs
 
@@ -190,10 +190,10 @@ def cost_plot(dfs):
     plt.figure()
     #plt.title('Total costs per number of agents ')
     plt.xlabel('Agents [-]')
-    plt.ylabel('Total cost [-]')
+    plt.ylabel('Average cost [-]')
     
-    cost_max = 0
-    cost_min = inf
+    current_cost_max = 0
+    current_cost_min = inf
     for df_key in dfs.keys():
         color = algorithm_colors[df_key]
         dfs[df_key].groupby('agents')['costs'].max().plot(color = color, label="", alpha=0.35)
@@ -204,8 +204,11 @@ def cost_plot(dfs):
         costs_max = dfs[df_key].groupby('agents')['costs'].max()
         costs_min = dfs[df_key].groupby('agents')['costs'].min()
         
-        cost_max = max(costs_max.rename_axis(index=None).max(), cost_max)
-        cost_min = min(costs_min.rename_axis(index=None).min(), cost_min)
+        cost_max = costs_max.rename_axis(index=None).max()
+        cost_min = costs_min.rename_axis(index=None).min()
+        
+        current_cost_max = max(cost_max, current_cost_max)
+        current_cost_min = min(cost_min, current_cost_min)
         
         plt.fill_between(agent_range,costs_max, costs_min, color=color, alpha=0.25)
         
@@ -213,6 +216,7 @@ def cost_plot(dfs):
    
  
     plt.legend()
+    plt.ylim(22, 42) # 1.05*current_cost_max)
    
     #plt.fill_between(costs_max,costs_min)
     #successrate = df.groupby('agents')['success'].mean()
@@ -253,6 +257,9 @@ def finish_times_plot(dfs):
     plt.xlabel('Agents [-]')
     plt.ylabel('Finish time [-]')
     
+    current_finish_time_max = 0
+    current_finish_time_min = inf
+    
     for df_key in dfs.keys():
     
         color = algorithm_colors[df_key]
@@ -261,14 +268,18 @@ def finish_times_plot(dfs):
         dfs[df_key].groupby('agents')['finish times'].min().plot(color=color, label="", alpha=0.35)
         dfs[df_key].groupby('agents')['finish times'].mean().plot(color=color, label=df_key, ylim = 0)
         
-        finishtime_max = dfs[df_key].groupby('agents')['finish times'].max()
-        finishtime_min = dfs[df_key].groupby('agents')['finish times'].min()
+        finish_times_max = dfs[df_key].groupby('agents')['finish times'].max()
+        finish_times_min = dfs[df_key].groupby('agents')['finish times'].min()
         
-        finishtime_max = finishtime_max.rename_axis(index=None)
-        finishtime_min = finishtime_min.rename_axis(index=None)
+        finish_time_max = finish_times_max.rename_axis(index=None).max()
+        finish_time_min = finish_times_min.rename_axis(index=None).min()
+        
+        current_finish_time_max = max(finish_time_max, current_finish_time_max)
+        current_finish_time_min = min(finish_time_min, current_finish_time_min)
     
-        plt.fill_between(agent_range,finishtime_max, finishtime_min, color=color, alpha=0.25)
+        plt.fill_between(agent_range,finish_times_max, finish_times_min, color=color, alpha=0.25)
     plt.legend()
+    plt.ylim(22, 42) # 1.05*current_finish_time_max)
     plt.show()
     
 def cpu_times_plot(dfs):
@@ -286,7 +297,7 @@ def add_to_database(algorithm, paths, cpu_time):
     #cpu_time = timer.time() - start_time
     
     if not paths == None: 
-        costs[algorithm].append(get_sum_of_cost(paths))
+        costs[algorithm].append(get_sum_of_cost(paths)/agents)
         finish_times[algorithm].append(len(max(paths)))
         success[algorithm].append(True)
         cpu_times[algorithm].append(cpu_time)
@@ -386,6 +397,11 @@ if __name__ == '__main__':
 
          
                 for simulations in range(simulations_per_agent):
+                    
+                    print("Iteration", simulations, "for", agents, "agents. Total progress:", 
+                          round(((agents-min(agent_range))*simulations_per_agent+simulations)/
+                          (len(agent_range)*simulations_per_agent)*100,1), "%")
+                    
                     nums_of_agents.append(agents)
                    
                     my_map, starts, goals = import_mapf_instance(file)
@@ -430,7 +446,7 @@ if __name__ == '__main__':
                             res1, res2 = zip(*temp)
                             starts, goals = list(res1), list(res2)
                             
-                        cpu_time = timer.time() - start_time #timer.time() - start_time
+                        cpu_time = timer.time() - start_time
                         add_to_database("PrioritizedPlusSimple", paths, cpu_time)        
                             
     
@@ -474,14 +490,14 @@ if __name__ == '__main__':
                         else: 
                             paths = None
                             
-                        if get_sum_of_cost(paths) > 400:
-                            print(paths1)
-                            print("paths2", paths2)
+                        # if get_sum_of_cost(paths) > 400:
+                        #     print(paths1)
+                        #     print("paths2", paths2)
                         # Some simulations would be very inefficient, this condition visualizes those edge cases
-                        if not paths == None: 
-                            if get_sum_of_cost(paths) > 400: 
-                                animation = Animation(my_map, starts, goals, paths)
-                                animation.show()
+                        # if not paths == None: 
+                        #     if get_sum_of_cost(paths) > 400: 
+                        #         animation = Animation(my_map, starts, goals, paths)
+                        #         animation.show()
                                 
                         cpu_time = timer.time() - start_time
                         add_to_database("PrioritizedPlus", paths, cpu_time)        
@@ -515,8 +531,8 @@ if __name__ == '__main__':
                          }
                 
                 dfs[algorithm] = pd.DataFrame(data = d)
+                dfs[algorithm].to_csv("analyses/L3-" + algorithm + ".csv")
 
-            
             cost_plot(dfs)
             succes_plot(dfs)
             finish_times_plot(dfs)

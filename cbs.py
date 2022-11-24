@@ -228,7 +228,7 @@ class CBSSolver(object):
             
             # Check if the node is collision-free, and thus optimal.
             if len(node['collisions']) == 0:
-                print(node)
+                # print(node)
                 return node['paths']
             
             # Grab the first collision
@@ -304,11 +304,11 @@ class CBSSolver(object):
                 # Add the node to the open list.
                 self.push_node(new_node)
                 
-        print("No solution found.")
+        #print("No solution found.")
         result = self.pop_node()
-        print("Visualised node:", result)
+        #print("Visualised node:", result)
         # tree.show()
-        self.print_results(result)
+        #self.print_results(result)
         debug_file.close()
         return result['paths']
 
