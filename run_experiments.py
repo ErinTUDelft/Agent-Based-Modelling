@@ -23,7 +23,6 @@ import time as timer
 SOLVER = "Prioritized"
 
 
-
 # Determine whether to perform statistical analysis or to perform a single simulation.
 statistical_analysis = True
 
@@ -34,10 +33,16 @@ full_random = True
 # CPU cut-off time
 CPU_cutoff_time = 5
 
-# Algorithms to consider for statistical analysis
+# Parameters for statistical analysis
 simulations_per_agent = 50
 agent_range = range(2,11)
 
+""" 
+Algorithms to consider for statistical analysis. These can easily be turned off/on by adding/removing "not" True
+Computing all combined takes about 30 minutes ~ 1 hour to run. Quicker simulations can be performed by using the Prioritized or PrioritizedPlusSimple algorithms
+as those are much faster. Additionally, the cpu cutoff time, or the amount of simulations can be lowered. 
+"""
+#Prioritized = not True
 Prioritized = True
 PrioritizedPlusSimple = True
 PrioritizedPlus = True
@@ -91,8 +96,9 @@ def print_locations(my_map, locations):
 
 def random_start(number_of_agents, start_locs=None, goal_locs=None):
     """
-    This function spawns the agent randomly on the first two columns, and assigns their location on the opposite 
-    side of the map.
+    This function spawns the agents randomly on the first two columns, and assigns their location on the opposite 
+    side of the map. A new location is tried to be found in case a coordinate is already in use. This approach could 
+    computationally be slightly improved, but this was not deemed necessary. 
     """
 
 
@@ -228,7 +234,7 @@ def succes_plot(dfs):
     """"
     This function takes the large created dataframe, and categorizes it by grouping the 
     success rates for the different algorithms. As the successes are stored as either True or False Boolean's
-    (Which are represented by 1's and 0's, the average can be taken. These values are then plotted. 
+    (Which are represented by 1's and 0's, allowing the average to be taken. These values are then plotted. 
     """
     plt.figure()
     #plt.title('Success rate per number of agents')
@@ -247,8 +253,8 @@ def succes_plot(dfs):
 
 def finish_times_plot(dfs):
     """
-    The finish times are defined as the time it takes for all the agents to reach their goal location. 
-    This value is found by taking the maximum path length of each solution. 
+    The finish times are defined as the time it takes for all the agents to reach their goal location.(The total set-up time)
+    This value is found by taking the maximum path length of each solution. The maximum, minimum, and mean values for each number of agents are plotted. 
     """
 
 
@@ -283,6 +289,10 @@ def finish_times_plot(dfs):
     plt.show()
     
 def cpu_times_plot(dfs):
+    """
+    The cpu time is found by subtracting the time the solution algorithm was started, from the time the algorithm was finished.
+    Whenever cut-off times are implemented, a value of None is added to the dictionary: Thus only the cpu times of valid solutions are plotted. 
+    """
     plt.figure() 
 
     plt.xlabel('Agents [-]')
@@ -295,6 +305,9 @@ def cpu_times_plot(dfs):
     
 def add_to_database(algorithm, paths, cpu_time):
     #cpu_time = timer.time() - start_time
+    """
+    This function checks whether an algorithm was able to find a valid solution, and adds the parameters to the database accordingly
+    """
     
     if not paths == None: 
         costs[algorithm].append(get_sum_of_cost(paths)/agents)
@@ -406,9 +419,7 @@ if __name__ == '__main__':
                    
                     my_map, starts, goals = import_mapf_instance(file)
                     starts, goals = random_start(agents)
-                    
-                    start_time = timer.time()
-                    
+                                          
             
                     if CBS:
                         start_time = timer.time()
@@ -429,10 +440,14 @@ if __name__ == '__main__':
                         add_to_database("Prioritized", paths,cpu_time)
                         
                         
-                        #print(cpu_times['Prioritized'])
-                        
+    
                             
                     if PrioritizedPlusSimple:
+                        """
+                        This algorithm functions for its first iteration similarily to the prioritized method: it tries to find a solution for each 
+                        agent in the given order of priority. It is then checked whether this yields a valid solution. If not, the starts and goals are then shuffled in the same way
+                        (This needs to be done simultaneously, because if the starts and goals were shuffled seperately, then also the goal location of each agent would change)
+                        """ 
                         start_time = timer.time()
                         paths = None
                         while paths == None:
@@ -452,8 +467,20 @@ if __name__ == '__main__':
     
  
                     if PrioritizedPlus:
+                        """
+                        The prioritizedPlus algorithm tries to find a solution using the distributed method. When this fails to find a solution, the "PrioritizedPlusSimple"
+                        method will yield a valid solution. Right now both are calculated and the lowest cost path is chosen; This was done because the distributed algorithm sometimes 
+                        yield very high cost solutions. Whence the distributed algorithm gets improved we can let it try to find a (hopefully near-optimal) solution, and only
+                        once no solution can be found that the centralized prioritized method takes over. 
+                        """ 
                         start_time = timer.time()
-      
+                        
+                        """
+                        Here also the CBS solver could also be used: this actually yields lower cost solutions for a small number of agents. However, the ultimate goal is
+                        is to improve upon the distributed method such that it will also gives efficient solutions. Then, the hybrid approach makes more sense to use. It is even possible 
+                        that the distributed algorithm becomes so effective that it will álways find a solution, at which point the prioritized part can be turned off. 
+                        However, this is hard to guarantee, and thus the prioritized part will act as a safety net for the near-future, in which the distributed algorithm is still being developed. 
+                        """
                         solver = DistributedPlanningSolver(my_map, starts, goals, CPU_cutoff_time)
                         paths1 = solver.find_solution()
                      
@@ -485,8 +512,8 @@ if __name__ == '__main__':
                                 paths = paths2
                             else:
                                 paths = paths1
-                        #elif not paths1 == None and paths2 == None:
-                            #paths = paths1
+                        elif not paths1 == None and paths2 == None:
+                            paths = paths1
                         else: 
                             paths = None
                             
@@ -512,9 +539,7 @@ if __name__ == '__main__':
                         cpu_time = timer.time() - start_time
                         add_to_database("Distributed", paths, cpu_time)
                 
-                        
-   
-                        
+                    
             #print(costs, finish_times, success, cpu_times, nums_of_agents)
             
             dfs = dict()
